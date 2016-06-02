@@ -6,13 +6,10 @@ import android.util.AttributeSet;
 import android.widget.ImageView;
 
 /**
- * 这只是一个简单的ImageView，可以存放Bitmap和Path等信息
- * 
- * @author xmuSistone
- * 
+ * 可以存放Bitmap和Path的ImageView
  */
 public class DataImageView extends ImageView {
-	
+
 	private String absolutePath;
 
 	private Bitmap bitmap;

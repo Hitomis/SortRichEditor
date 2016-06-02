@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -39,12 +40,12 @@ public class SortRichEditor extends ScrollView {
     private static final int DEFAULT_SCROLL_SPEED = 5;
 
     /**
-     * ImageView在排序状态下的高度
+     * 默认ImageView高度
      */
-    public final int DEFAULT_IMAGE_HEIGHT = dip2px(250);
+    public final int DEFAULT_IMAGE_HEIGHT = dip2px(170);
 
     /**
-     * EditText在排序状态下的高度
+     * 默认EditText高度
      */
     public final int SIZE_REDUCE_VIEW = dip2px(75);
 
@@ -54,14 +55,9 @@ public class SortRichEditor extends ScrollView {
     private final int SCROLL_OFFSET = (int)(SIZE_REDUCE_VIEW * .3);
 
     /**
-     * 默认view之间的竖直间距为5dp
+     * 默认Marging
      */
-    private final int DEFAULT_VERTICAL_SPACEING = dip2px(5);
-
-    /**
-     * 默认水平Padding为10dp
-     */
-    private final int DEFAULT_HORIZONTAL_PADDING = dip2px(10);
+    private final int DEFAULT_MARGING = dip2px(15);
 
     /**
      * ScrollView自滚动的系数因子【值越大，滚动越来越快，1为正常】
@@ -158,6 +154,8 @@ public class SortRichEditor extends ScrollView {
 
     private int scrollDownDistance = -5;
 
+    private float currRawY;
+
     public SortRichEditor(Context context) {
         this(context, null);
     }
@@ -182,7 +180,9 @@ public class SortRichEditor extends ScrollView {
 
         LinearLayout.LayoutParams firstEditParam = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        firstEditParam.bottomMargin = DEFAULT_VERTICAL_SPACEING;
+        firstEditParam.bottomMargin = DEFAULT_MARGING;
+        firstEditParam.leftMargin = DEFAULT_MARGING;
+        firstEditParam.rightMargin= DEFAULT_MARGING;
         EditText firstEdit = createEditText("在此输入帖子内容");
         editTextHeightArray.put(Integer.parseInt(firstEdit.getTag().toString()), ViewGroup.LayoutParams.WRAP_CONTENT);
         editTextBackground = firstEdit.getBackground();
@@ -228,14 +228,18 @@ public class SortRichEditor extends ScrollView {
 
     }
 
+    /**
+     * 初始化ContainerLayout父容器
+     */
     private void initContainerLayout() {
-        // 初始化ContainerLayout父容器
         containerLayout = createContaniner();
         addView(containerLayout);
     }
 
-    private float currRawY;
-
+    /**
+     * 创建父容器
+     * @return
+     */
     @NonNull
     private LinearLayout createContaniner() {
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
@@ -288,10 +292,7 @@ public class SortRichEditor extends ScrollView {
 
 
         };
-        containerLayout.setPadding(DEFAULT_HORIZONTAL_PADDING
-                , DEFAULT_VERTICAL_SPACEING
-                , DEFAULT_HORIZONTAL_PADDING
-                , DEFAULT_VERTICAL_SPACEING);
+        containerLayout.setPadding(0, DEFAULT_MARGING, 0, DEFAULT_MARGING);
         containerLayout.setOrientation(LinearLayout.VERTICAL);
         containerLayout.setBackgroundColor(Color.WHITE);
         containerLayout.setLayoutParams(layoutParams);
@@ -318,13 +319,14 @@ public class SortRichEditor extends ScrollView {
                 child = containerLayout.getChildAt(i);
                 childArray[sortIndex] = child;
             }
-
+            containerLayout.setLayoutTransition(null);
             containerLayout.removeAllViews();
             for (int i = 0; i < childCount; i++) {
                 child = childArray[i];
                 child.setLayoutParams(resetChildLayoutParams(child));
                 containerLayout.addView(child);
             }
+            containerLayout.setLayoutTransition(mTransitioner); // 恢复transition动画
         } else { // 没有重新排列
             for (int i = 0; i < childCount; i++) {
                 child = containerLayout.getChildAt(i);
@@ -359,10 +361,18 @@ public class SortRichEditor extends ScrollView {
             }
         }
 
+        List<View> removeChildList = new ArrayList<>();
+
         View child;
         int pos, preIndex = 0;
         for (int i = 0; i < childCount; i++) {
             child = containerLayout.getChildAt(i);
+
+            if (child instanceof ImageView) {
+                removeChildList.add(child);
+                continue;
+            }
+
             int tagID = Integer.parseInt(child.getTag().toString());
             ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
             if (child instanceof EditText) { // 文本编辑框
@@ -370,18 +380,30 @@ public class SortRichEditor extends ScrollView {
                 child.setFocusable(false);
                 child.setBackgroundDrawable(getResources().getDrawable(R.drawable.shape_dash_edit));
             }
+
             layoutParams.height = SIZE_REDUCE_VIEW;
             child.setLayoutParams(layoutParams);
             if (i == 0) {
                 preIndex = tagID;
-                pos = DEFAULT_VERTICAL_SPACEING;
+                pos = DEFAULT_MARGING;
             } else {
-                pos = SIZE_REDUCE_VIEW + DEFAULT_VERTICAL_SPACEING + preSortPositionArray.get(preIndex);
+                pos = SIZE_REDUCE_VIEW + DEFAULT_MARGING + preSortPositionArray.get(preIndex);
 
                 preIndex = tagID;
             }
             preSortPositionArray.put(tagID, pos);
         }
+
+        if (!removeChildList.isEmpty()) {
+            containerLayout.setLayoutTransition(null);
+
+            for (View removeChild : removeChildList) {
+                containerLayout.removeView(removeChild);
+            }
+
+            containerLayout.setLayoutTransition(mTransitioner); // 恢复transition动画
+        }
+
     }
 
     /**
@@ -442,6 +464,7 @@ public class SortRichEditor extends ScrollView {
         editText.setOnKeyListener(editTextKeyListener);
         editText.setTag(viewTagID++);
         editText.setHint(hint);
+        editText.setTextColor(Color.parseColor("#333333"));
         editText.setOnFocusChangeListener(editTextFocusListener);
         return editText;
     }
@@ -506,7 +529,24 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 在特定位置插入EditText
+     * 在指定位置添加一个将来用于插入文字的图片
+     * @param index
+     */
+    private void addInsertTextImageView(int index) {
+        ImageView ivInsertText = new ImageView(getContext());
+        ivInsertText.setTag(viewTagID++);
+        ivInsertText.setImageResource(R.mipmap.icon_add_text);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = DEFAULT_MARGING;
+        ivInsertText.setLayoutParams(lp);
+
+        containerLayout.addView(ivInsertText, index);
+    }
+
+    /**
+     * 在指定位置插入EditText
      *
      * @param index   位置
      * @param editStr EditText显示的文字
@@ -515,9 +555,12 @@ public class SortRichEditor extends ScrollView {
         EditText editText = createEditText("");
         editText.setText(editStr);
 
+        // 调整EditText的外边距
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = DEFAULT_VERTICAL_SPACEING;
+        lp.bottomMargin = DEFAULT_MARGING;
+        lp.leftMargin = DEFAULT_MARGING;
+        lp.rightMargin= DEFAULT_MARGING;
         editText.setLayoutParams(lp);
 
         // 请注意此处，EditText添加、或删除不触动Transition动画
@@ -527,25 +570,38 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 在特定位置添加ImageView
+     * 在指定位置添加ImageView
      */
-    private void addImageViewAtIndex(final int index, Bitmap bmp, String imagePath) {
+    private void addImageViewAtIndex(int index, Bitmap bmp, String imagePath) {
+        if (index > 0) {
+            int lastIndex = index - 1;
+            View child = containerLayout.getChildAt(lastIndex);
+            // index位置的上一个child是ImageView，则在插入本ImageView的时候，多插入一个图标，用于将来可以插入EditText
+            if (child instanceof RelativeLayout) {
+                addInsertTextImageView(index++);
+            }
+        }
+
         final RelativeLayout imageLayout = createImageLayout();
         DataImageView imageView = (DataImageView) imageLayout.findViewById(R.id.edit_imageView);
         imageView.setImageBitmap(bmp);
         imageView.setBitmap(bmp);
         imageView.setAbsolutePath(imagePath);
 
-        // 调整imageView的高度
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, DEFAULT_IMAGE_HEIGHT);
-        lp.bottomMargin = DEFAULT_VERTICAL_SPACEING;
+        // 调整imageView的外边距
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, DEFAULT_IMAGE_HEIGHT);
+        lp.bottomMargin = DEFAULT_MARGING;
+        lp.leftMargin = DEFAULT_MARGING;
+        lp.rightMargin= DEFAULT_MARGING;
         imageLayout.setLayoutParams(lp);
 
         // onActivityResult无法触发动画，此处post处理
+        final int finalIndex = index;
         containerLayout.postDelayed(new Runnable() {
             @Override
             public void run() {
-                containerLayout.addView(imageLayout, index);
+                containerLayout.addView(imageLayout, finalIndex);
             }
         }, 200);
     }
@@ -635,9 +691,7 @@ public class SortRichEditor extends ScrollView {
         isSort = !isSort;
         if (isSort) {
             prepareSortUI();
-
             prepareSortConfig();
-
         } else {
             endSortUI();
         }
@@ -696,7 +750,7 @@ public class SortRichEditor extends ScrollView {
         for (int i = 0; i < childCount; i++) {
             child = containerLayout.getChildAt(i);
             tagID = Integer.parseInt(child.getTag().toString());
-            sortIndex = (preSortPositionArray.get(tagID) - DEFAULT_VERTICAL_SPACEING) / (SIZE_REDUCE_VIEW + DEFAULT_VERTICAL_SPACEING);
+            sortIndex = (preSortPositionArray.get(tagID) - DEFAULT_MARGING) / (SIZE_REDUCE_VIEW + DEFAULT_MARGING);
             indexArray.put(i, sortIndex);
         }
     }
@@ -710,7 +764,7 @@ public class SortRichEditor extends ScrollView {
 
         @Override
         public int clampViewPositionHorizontal(View child, int left, int dx) {
-            final int leftBound = getPaddingLeft() + DEFAULT_HORIZONTAL_PADDING;
+            final int leftBound = getPaddingLeft() + DEFAULT_MARGING;
             final int rightBound = getWidth() - child.getWidth() - leftBound;
             final int newLeft = Math.min(Math.max(left, leftBound), rightBound);
             return newLeft;
