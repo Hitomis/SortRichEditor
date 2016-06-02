@@ -2,8 +2,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 底部的按钮 -->
+    <!-- 富文本编辑器 -->
+    <com.hitomi.sortricheditor.view.SortRichEditor
+        android:id="@+id/richEditor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/title"
+        android:background="#fff" />
 
+    <!-- 底部的按钮 -->
     <LinearLayout
         android:id="@+id/title"
         android:layout_width="match_parent"
@@ -37,14 +44,5 @@
             android:background="@mipmap/icon_share"
             android:gravity="center_horizontal" />
     </LinearLayout>
-
-    <!-- 富文本编辑器 -->
-
-    <com.hitomi.sortricheditor.view.SortRichEditor
-        android:id="@+id/richEditor"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/title"
-        android:background="#fff" />
 
 </RelativeLayout>

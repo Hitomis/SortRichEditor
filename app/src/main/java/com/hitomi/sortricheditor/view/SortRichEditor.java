@@ -36,6 +36,8 @@ import java.util.List;
  */
 public class SortRichEditor extends ScrollView {
 
+    private static final int DEFAULT_SCROLL_SPEED = 5;
+
     /**
      * ImageView在排序状态下的高度
      */
@@ -47,6 +49,11 @@ public class SortRichEditor extends ScrollView {
     public final int SIZE_REDUCE_VIEW = dip2px(75);
 
     /**
+     * 出发ScrollView滚动时，顶部与底部的偏移量
+     */
+    private final int SCROLL_OFFSET = (int)(SIZE_REDUCE_VIEW * .3);
+
+    /**
      * 默认view之间的竖直间距为5dp
      */
     private final int DEFAULT_VERTICAL_SPACEING = dip2px(5);
@@ -55,6 +62,11 @@ public class SortRichEditor extends ScrollView {
      * 默认水平Padding为10dp
      */
     private final int DEFAULT_HORIZONTAL_PADDING = dip2px(10);
+
+    /**
+     * ScrollView自滚动的系数因子【值越大，滚动越来越快，1为正常】
+     */
+    private final float scrollSensitivity = 1.02f;
 
     /**
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
@@ -72,12 +84,12 @@ public class SortRichEditor extends ScrollView {
      * 所以这里指定为所有子view的容器为containerLayout(LinearLayout)
      * 即：布局层次为：
      * ScrollView{
-     * containerLayout：{
-     * child1,
-     * child2,
-     * child3,
-     * ...
-     * }
+     *      containerLayout：{
+     *          child1,
+     *          child2,
+     *          child3,
+     *          ...
+     *      }
      * }
      */
     private LinearLayout containerLayout;
@@ -137,6 +149,15 @@ public class SortRichEditor extends ScrollView {
      */
     private boolean isSort;
 
+    /**
+     * 容器相对于屏幕顶部和底部的长度值，用于排序拖动Child的时候判定ScrollView是否滚动
+     */
+    private int containerTopVal, containerBottomVal;
+
+    private int scrollUpDistance = 5;
+
+    private int scrollDownDistance = -5;
+
     public SortRichEditor(Context context) {
         this(context, null);
     }
@@ -157,7 +178,7 @@ public class SortRichEditor extends ScrollView {
         editTextHeightArray = new SparseArray<>();
 
         // 初始化ViewDragHelper
-        viewDragHelper = ViewDragHelper.create(containerLayout, 1.f, new ViewDragHelperCallBack());
+        viewDragHelper = ViewDragHelper.create(containerLayout, 1.5f, new ViewDragHelperCallBack());
 
         LinearLayout.LayoutParams firstEditParam = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -213,6 +234,8 @@ public class SortRichEditor extends ScrollView {
         addView(containerLayout);
     }
 
+    private float currRawY;
+
     @NonNull
     private LinearLayout createContaniner() {
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
@@ -227,14 +250,27 @@ public class SortRichEditor extends ScrollView {
                 viewDragHelper.processTouchEvent(event);
                 int action = event.getAction();
                 switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        break;
                     case MotionEvent.ACTION_MOVE:
-                        if (event.getRawY() > SortRichEditor.this.getBottom()) {
-                            SortRichEditor.this.scrollBy(0, 5);
+                        if (isSort) {
+                            currRawY = event.getRawY();
+                            if (currRawY > containerBottomVal) { // 内容上滚动
+                                scrollUpDistance = (int) Math.ceil(scrollUpDistance * scrollSensitivity);
+                                SortRichEditor.this.scrollBy(0, scrollUpDistance);
+                            }
+                            if (currRawY < containerTopVal) { // 内容下滚动
+                                scrollDownDistance = (int) Math.floor(scrollDownDistance * scrollSensitivity);
+                                SortRichEditor.this.scrollBy(0, scrollDownDistance);
+                            }
+                            if (currRawY > containerTopVal && currRawY < containerBottomVal) {
+                                resetScrollSpeed();
+                            }
                         }
-                        if (event.getRawY() < SIZE_REDUCE_VIEW * .6) {
-                            SortRichEditor.this.scrollBy(0, -5);
-                        }
-                        System.out.println(event.getRawY());
+
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        resetScrollSpeed();
                         break;
                 }
                 return true;
@@ -261,6 +297,11 @@ public class SortRichEditor extends ScrollView {
         containerLayout.setLayoutParams(layoutParams);
         setupLayoutTransitions(containerLayout);
         return containerLayout;
+    }
+
+    private void resetScrollSpeed() {
+        scrollUpDistance = DEFAULT_SCROLL_SPEED;
+        scrollDownDistance = -DEFAULT_SCROLL_SPEED;
     }
 
     private void endSortUI() {
@@ -433,15 +474,15 @@ public class SortRichEditor extends ScrollView {
     private void insertImage(Bitmap bitmap, String imagePath) {
         String lastEditStr = lastFocusEdit.getText().toString();
         int cursorIndex = lastFocusEdit.getSelectionStart();
-        String editStr1 = lastEditStr.substring(0, cursorIndex).trim();
+        String lastStr = lastEditStr.substring(0, cursorIndex).trim();
         int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
 
-        if (lastEditStr.length() == 0 || editStr1.length() == 0) {
+        if (lastEditStr.length() == 0 || lastStr.length() == 0) {
             // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片，并且EditText下移即可
             addImageViewAtIndex(lastEditIndex, bitmap, imagePath);
         } else {
             // 如果EditText非空且光标不在最顶端，则需要添加新的imageView和EditText
-            lastFocusEdit.setText(editStr1);
+            lastFocusEdit.setText(lastStr);
             String editStr2 = lastEditStr.substring(cursorIndex).trim();
             if (containerLayout.getChildCount() - 1 == lastEditIndex
                     || editStr2.length() > 0) {
@@ -450,13 +491,13 @@ public class SortRichEditor extends ScrollView {
 
             addImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath);
             lastFocusEdit.requestFocus();
-            lastFocusEdit.setSelection(editStr1.length(), editStr1.length());
+            lastFocusEdit.setSelection(lastStr.length(), lastStr.length());
         }
         hideKeyBoard();
     }
 
     /**
-     * 隐藏小键盘
+     * 隐藏软键盘
      */
     public void hideKeyBoard() {
         InputMethodManager imm = (InputMethodManager) getContext()
@@ -499,7 +540,6 @@ public class SortRichEditor extends ScrollView {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, DEFAULT_IMAGE_HEIGHT);
         lp.bottomMargin = DEFAULT_VERTICAL_SPACEING;
         imageLayout.setLayoutParams(lp);
-
 
         // onActivityResult无法触发动画，此处post处理
         containerLayout.postDelayed(new Runnable() {
@@ -595,17 +635,32 @@ public class SortRichEditor extends ScrollView {
         isSort = !isSort;
         if (isSort) {
             prepareSortUI();
-            indexArray.clear();
+
+            prepareSortConfig();
+
         } else {
             endSortUI();
         }
+    }
+
+    private void prepareSortConfig() {
+        indexArray.clear();
+
+        int[] position = new int[2];
+        SortRichEditor.this.getLocationOnScreen(position);
+
+        SortRichEditor sortRichEditor = SortRichEditor.this;
+        containerTopVal = position[1] + sortRichEditor.getPaddingTop() + SCROLL_OFFSET;
+        containerBottomVal = containerTopVal + sortRichEditor.getHeight() - sortRichEditor.getPaddingBottom() - SCROLL_OFFSET;
+
+        resetScrollSpeed();
     }
 
     /**
      * 对外提供的接口, 生成编辑数据上传
      */
     public List<EditData> buildEditData() {
-        List<EditData> dataList = new ArrayList<EditData>();
+        List<EditData> dataList = new ArrayList<>();
         int num = containerLayout.getChildCount();
         for (int index = 0; index < num; index++) {
             View itemView = containerLayout.getChildAt(index);
