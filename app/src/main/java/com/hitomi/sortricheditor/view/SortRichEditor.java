@@ -432,7 +432,7 @@ public class SortRichEditor extends ScrollView {
         }
     }
 
-    public void sort() {
+    public boolean sort() {
         isSort = !isSort;
         containerLayout.setLayoutTransition(null);
         if (isSort) {
@@ -443,7 +443,9 @@ public class SortRichEditor extends ScrollView {
         }
         // 恢复transition动画
         containerLayout.setLayoutTransition(mTransitioner);
+        return isSort;
     }
+
 
     private void prepareSortUI() {
         int childCount = containerLayout.getChildCount();

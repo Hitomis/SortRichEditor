@@ -10,8 +10,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
+import android.widget.ImageView;
 
 import com.hitomi.sortricheditor.view.SortRichEditor;
 import com.hitomi.sortricheditor.view.SortRichEditorData;
@@ -21,7 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final int REQUEST_CODE_PICK_IMAGE = 1023;
     private static final int REQUEST_CODE_CAPTURE_CAMEIA = 1022;
@@ -29,14 +34,45 @@ public class MainActivity extends AppCompatActivity {
             Environment.getExternalStorageDirectory() + "/DCIM/Camera");
 
     private SortRichEditor editor;
-    private View btn1, btn2, btn3;
-    private View.OnClickListener btnListener;
+
+    private ImageView ivGallery, ivCamera;
+
+    private Button btnPosts;
+
     private File mCurrentPhotoFile;// 照相机拍照得到的图片
+
+    private boolean isAllowInsertImage;
 
     public static Intent getTakePickIntent(File f) {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE, null);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
         return intent;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_sort:
+                if (editor.sort()) {
+                    dealInsertImage(false);
+                } else {
+                    dealInsertImage(true);
+                }
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void dealInsertImage(boolean isEnable) {
+        ivGallery.setClickable(isEnable);
+        ivCamera.setClickable(isEnable);
     }
 
     @Override
@@ -46,35 +82,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         editor = (SortRichEditor) findViewById(R.id.richEditor);
-        btnListener = new View.OnClickListener() {
+        ivGallery = (ImageView) findViewById(R.id.iv_gallery);
+        ivCamera = (ImageView) findViewById(R.id.iv_camera);
+        btnPosts = (Button) findViewById(R.id.btn_posts);
 
-            @Override
-            public void onClick(View v) {
-                editor.processSoftKeyBoard(false);
-                if (v.getId() == btn1.getId()) {
-                    // 打开系统相册
-                    Intent intent = new Intent(Intent.ACTION_PICK);
-                    intent.setType("image/*");// 相片类型
-                    startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
-                } else if (v.getId() == btn2.getId()) {
-                    // 打开相机
-                    openCamera();
-                } else if (v.getId() == btn3.getId()) {
-                    List<SortRichEditorData> editList = editor.buildEditData();
-                    // 下面的代码可以上传、或者保存，请自行实现
-                    editor.sort();
-                    dealEditData(editList);
-                }
-            }
-        };
-
-        btn1 = findViewById(R.id.button1);
-        btn2 = findViewById(R.id.button2);
-        btn3 = findViewById(R.id.button3);
-
-        btn1.setOnClickListener(btnListener);
-        btn2.setOnClickListener(btnListener);
-        btn3.setOnClickListener(btnListener);
+        ivGallery.setOnClickListener(this);
+        ivCamera.setOnClickListener(this);
+        btnPosts.setOnClickListener(this);
     }
 
     /**
@@ -163,5 +177,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return data;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.iv_gallery:
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");// 相片类型
+                startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
+                break;
+            case R.id.iv_camera:
+                openCamera();
+                break;
+            case R.id.btn_posts:
+                List<SortRichEditorData> editList = editor.buildEditData();
+                // 下面的代码可以上传、或者保存，请自行实现
+                dealEditData(editList);
+                break;
+        }
     }
 }

@@ -11,38 +11,43 @@
         android:background="#fff" />
 
     <!-- 底部的按钮 -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
-        android:background="#666"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:background="#F1F1F1">
 
-        <View
-            android:id="@+id/button1"
-            android:layout_width="30dp"
-            android:layout_height="28dp"
-            android:layout_marginLeft="10dp"
+        <ImageView
+            android:id="@+id/iv_gallery"
+            android:layout_width="28dp"
+            android:layout_height="26dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="22dp"
             android:background="@mipmap/icon_gallery"
             android:gravity="center_horizontal" />
 
-        <View
-            android:id="@+id/button2"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="14dp"
+        <ImageView
+            android:id="@+id/iv_camera"
+            android:layout_width="28dp"
+            android:layout_height="26dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="25dp"
+            android:layout_toRightOf="@id/iv_gallery"
             android:background="@mipmap/icon_camera"
             android:gravity="center_horizontal" />
 
-        <View
-            android:id="@+id/button3"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="14dp"
-            android:background="@mipmap/icon_share"
-            android:gravity="center_horizontal" />
-    </LinearLayout>
+        <Button
+            android:id="@+id/btn_posts"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="15dp"
+            android:background="#4ca4e9"
+            android:text="发表"
+            android:textColor="@android:color/white" />
+
+    </RelativeLayout>
 
 </RelativeLayout>
