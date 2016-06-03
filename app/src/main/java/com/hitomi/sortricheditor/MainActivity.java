@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                editor.hideKeyBoard();
+                editor.processSoftKeyBoard(false);
                 if (v.getId() == btn1.getId()) {
                     // 打开系统相册
                     Intent intent = new Intent(Intent.ACTION_PICK);
