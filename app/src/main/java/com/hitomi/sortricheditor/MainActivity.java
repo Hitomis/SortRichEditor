@@ -41,8 +41,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private File mCurrentPhotoFile;// 照相机拍照得到的图片
 
-    private boolean isAllowInsertImage;
-
     public static Intent getTakePickIntent(File f) {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE, null);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
@@ -62,8 +60,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.action_sort:
                 if (editor.sort()) {
                     dealInsertImage(false);
+                    item.setTitle("完成");
                 } else {
                     dealInsertImage(true);
+                    item.setTitle("排序");
                 }
                 break;
         }
