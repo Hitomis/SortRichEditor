@@ -190,6 +190,8 @@ public class SortRichEditor extends ScrollView {
 
         inflater = LayoutInflater.from(context);
 
+        initListener();
+
         initParentLayout();
 
         initTitleLayout();
@@ -197,8 +199,6 @@ public class SortRichEditor extends ScrollView {
         initLineView();
 
         initContainerLayout();
-
-        initListener();
 
         // 初始化ViewDragHelper
         viewDragHelper = ViewDragHelper.create(containerLayout, 1.5f, new ViewDragHelperCallBack());
@@ -236,7 +236,6 @@ public class SortRichEditor extends ScrollView {
 
         // 标题栏的ViewGroup中添加一个EditText，用来填写标题文本
         EditText editText = new DeletableEditText(getContext());
-        editText.setOnKeyListener(editTextKeyListener);
         editText.setHint("请输入帖子标题");
         editText.setGravity(Gravity.TOP);
         editText.setCursorVisible(true);
