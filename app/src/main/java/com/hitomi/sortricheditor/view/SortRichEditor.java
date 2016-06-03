@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.hitomi.sortricheditor.R;
 
@@ -69,7 +70,12 @@ public class SortRichEditor extends ScrollView {
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
      * 的Background, 当排序完成后用于还原EditText默认的Background
      */
-    private final Drawable editTextBackground;
+    private Drawable editTextBackground;
+
+    /**
+     * 布局填充器
+     */
+    private LayoutInflater inflater;
 
     /**
      * 每创建一个child，为该child赋一个ID，该ID保存在view的tag属性中
@@ -78,23 +84,37 @@ public class SortRichEditor extends ScrollView {
 
     /**
      * 因为ScrollView的子view只能有一个，并且是ViewGroup
-     * 所以这里指定为所有子view的容器为containerLayout(LinearLayout)
+     * 所以这里指定为所有子view的容器为parentLayout(LinearLayout)
      * 即：布局层次为：
      * ScrollView{
-     *      containerLayout：{
-     *          child1,
-     *          child2,
-     *          child3,
-     *          ...
+     *      parentLayout{
+     *          titleLayout{
+     *              EditText,
+     *              TExtView
+     *          },
+     *
+     *          LineView,
+     *
+     *         containerLayout{
+     *              child1,
+     *              child2,
+     *              child3,
+     *              ...
+     *          }
      *      }
      * }
      */
-    private LinearLayout containerLayout;
+    private LinearLayout parentLayout;
 
     /**
-     * 布局填充器
+     * 标题栏ViewGroup
      */
-    private LayoutInflater inflater;
+    private LinearLayout titleLayout;
+
+    /**
+     * 用于放置各种文本图片内容的容器
+     */
+    private LinearLayout containerLayout;
 
     /**
      * EditText的软键盘监听器
@@ -129,7 +149,7 @@ public class SortRichEditor extends ScrollView {
      * 因为文字长短不一（过长换行让EditText高度增大），导致EditText高度不一，
      * 所以需要一个集合存储排序之前未缩小/放大的EditText高度
      */
-    private SparseArray<Integer> editTextHeightArray;
+    private SparseArray<Integer> editTextHeightArray = new SparseArray<>();
 
     /**
      * 准备排序时，缩小各个child，并存放缩小的child的top作为该child的position值
@@ -170,22 +190,98 @@ public class SortRichEditor extends ScrollView {
 
         inflater = LayoutInflater.from(context);
 
+        initParentLayout();
+
+        initTitleLayout();
+
+        initLineView();
+
         initContainerLayout();
 
         initListener();
 
-        editTextHeightArray = new SparseArray<>();
-
         // 初始化ViewDragHelper
         viewDragHelper = ViewDragHelper.create(containerLayout, 1.5f, new ViewDragHelperCallBack());
-
-        EditText firstEdit = createEditText("在此输入帖子内容");
-        editTextHeightArray.put(Integer.parseInt(firstEdit.getTag().toString()), ViewGroup.LayoutParams.WRAP_CONTENT);
-        editTextBackground = firstEdit.getBackground();
-        containerLayout.addView(firstEdit);
-        lastFocusEdit = firstEdit;
     }
 
+    /**
+     * 初始化分割线（用来分开标题栏ViewGroup与内容容器ViewGroup）
+     */
+    private void initLineView() {
+        // 父容器中中添加一条分割线用来分开标题栏ViewGroup与内容容器ViewGroup
+        View lineView = new View(getContext());
+        lineView.setBackgroundColor(Color.parseColor("#dddddd"));
+
+        LinearLayout.LayoutParams lineLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 1);
+        lineLayoutParams.leftMargin = DEFAULT_MARGING;
+        lineLayoutParams.rightMargin = DEFAULT_MARGING;
+        lineView.setLayoutParams(lineLayoutParams);
+        parentLayout.addView(lineView);
+    }
+
+    /**
+     * 创建标题栏ViewGroup以及标题栏中编辑标题的EditText和字数提醒的TextView
+     */
+    private void initTitleLayout() {
+
+        // 创建标题栏的ViewGroup
+        titleLayout = new LinearLayout(getContext());
+        titleLayout.setOrientation(LinearLayout.VERTICAL);
+        titleLayout.setPadding(0, DEFAULT_MARGING, 0, dip2px(10));
+
+        LinearLayout.LayoutParams titleLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        titleLayout.setLayoutParams(titleLayoutParams);
+
+        parentLayout.addView(titleLayout);
+
+        // 标题栏的ViewGroup中添加一个EditText，用来填写标题文本
+        EditText editText = new DeletableEditText(getContext());
+        editText.setOnKeyListener(editTextKeyListener);
+        editText.setHint("请输入帖子标题");
+        editText.setGravity(Gravity.TOP);
+        editText.setCursorVisible(true);
+        editText.setBackgroundResource(android.R.color.transparent);
+        editText.setTextColor(Color.parseColor("#333333"));
+        editText.setOnFocusChangeListener(editTextFocusListener);
+
+        LinearLayout.LayoutParams editTitleLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        editTitleLayoutParams.leftMargin = DEFAULT_MARGING;
+        editTitleLayoutParams.rightMargin = DEFAULT_MARGING;
+        editText.setLayoutParams(editTitleLayoutParams);
+
+        titleLayout.addView(editText);
+
+        // 标题栏的ViewGroup中添加一个显示字数限制的提醒TextView
+        TextView tvTextLimit = new TextView(getContext());
+        tvTextLimit.setText("19/30");
+        tvTextLimit.setTextColor(Color.parseColor("#aaaaaa"));
+        tvTextLimit.setTextSize(13);
+
+        LinearLayout.LayoutParams textLimitLayoutParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        textLimitLayoutParams.rightMargin = DEFAULT_MARGING;
+        textLimitLayoutParams.gravity = Gravity.RIGHT;
+        tvTextLimit.setLayoutParams(textLimitLayoutParams);
+
+        titleLayout.addView(tvTextLimit);
+    }
+
+    /**
+     * 创建父容器LinearLayout，指定为ScrollView的子View
+     */
+    private void initParentLayout() {
+        // 因为ScrollView的子view只能有一个，并且是ViewGroup,所以先创建一个Linearlayout父容器，用来放置所有其他ViewGroup
+        parentLayout = new LinearLayout(getContext());
+        parentLayout.setOrientation(LinearLayout.VERTICAL);
+
+        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        parentLayout.setLayoutParams(layoutParams);
+
+        addView(parentLayout);
+    }
+
+    /**
+     * 初始化监听器
+     */
     private void initListener() {
         // 初始化键盘退格监听
         // 主要用来处理点击回删按钮时，view的一些列合并操作
@@ -224,15 +320,21 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 初始化ContainerLayout父容器
+     * 初始化ContainerLayout文本内容容器
      */
     private void initContainerLayout() {
         containerLayout = createContaniner();
-        addView(containerLayout);
+        parentLayout.addView(containerLayout);
+
+        EditText firstEdit = createEditText("请输入帖子内容");
+        editTextHeightArray.put(Integer.parseInt(firstEdit.getTag().toString()), ViewGroup.LayoutParams.WRAP_CONTENT);
+        editTextBackground = firstEdit.getBackground();
+        containerLayout.addView(firstEdit);
+        lastFocusEdit = firstEdit;
     }
 
     /**
-     * 创建父容器
+     * 创建文本内容容器
      * @return
      */
     @NonNull
@@ -287,7 +389,7 @@ public class SortRichEditor extends ScrollView {
 
 
         };
-        containerLayout.setPadding(0, DEFAULT_MARGING, 0, DEFAULT_MARGING);
+        containerLayout.setPadding(0, dip2px(10), 0, dip2px(10));
         containerLayout.setOrientation(LinearLayout.VERTICAL);
         containerLayout.setBackgroundColor(Color.WHITE);
         containerLayout.setLayoutParams(layoutParams);
@@ -370,9 +472,10 @@ public class SortRichEditor extends ScrollView {
             int tagID = Integer.parseInt(child.getTag().toString());
             ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
             if (child instanceof EditText) { // 文本编辑框
+                EditText editText = ((EditText) child);
                 editTextHeightArray.put(tagID, layoutParams.height);
-                child.setFocusable(false);
-                child.setBackgroundDrawable(getResources().getDrawable(R.drawable.shape_dash_edit));
+                editText.setFocusable(false);
+                editText.setBackgroundResource(R.drawable.shape_dash_edit);
             }
 
             layoutParams.height = SIZE_REDUCE_VIEW;
@@ -766,6 +869,16 @@ public class SortRichEditor extends ScrollView {
         return (int) (dipValue * m + 0.5f);
     }
 
+    /**
+     * sp转换为px
+     * @param spValue
+     * @return
+     */
+    public int sp2px(float spValue) {
+        final float fontScale = getContext().getResources().getDisplayMetrics().scaledDensity;
+        return (int) (spValue * fontScale + 0.5f);
+    }
+
     private void prepareSortConfig() {
         indexArray.clear();
 
@@ -801,6 +914,12 @@ public class SortRichEditor extends ScrollView {
         }
 
         return dataList;
+    }
+
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        super.onScrollChanged(l, t, oldl, oldt);
+        processSoftKeyBoard(false);
     }
 
     @Override
