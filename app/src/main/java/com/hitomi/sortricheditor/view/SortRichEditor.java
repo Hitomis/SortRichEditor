@@ -303,7 +303,7 @@ public class SortRichEditor extends ScrollView {
             @Override
             public void onClick(View v) {
                 RelativeLayout parentView = (RelativeLayout) v.getParent();
-                onImageCloseClick(parentView);
+                onImageDeleteClick(parentView);
             }
         };
 
@@ -553,6 +553,7 @@ public class SortRichEditor extends ScrollView {
      * @param editTxt 光标所在的文本输入框
      */
     private void onBackspacePress(EditText editTxt) {
+
         int startSelection = editTxt.getSelectionStart();
         // 只有在光标已经顶到文本输入框的最前方，在判定是否删除之前的图片，或两个View合并
         if (startSelection == 0) {
@@ -562,7 +563,7 @@ public class SortRichEditor extends ScrollView {
             if (null != preView) {
                 if (preView instanceof RelativeLayout || preView instanceof ImageView) {
                     // 光标EditText的上一个view对应的是图片或者是一个“将来可编辑文本”的图标
-                    onImageCloseClick(preView);
+                    onImageDeleteClick(preView);
                 } else if (preView instanceof EditText) {
                     // 光标EditText的上一个view对应的还是文本框EditText
                     String str1 = editTxt.getText().toString();
@@ -590,7 +591,7 @@ public class SortRichEditor extends ScrollView {
      * @param view 整个image对应的relativeLayout view
      * @type 删除类型 0代表backspace删除 1代表按红叉按钮删除
      */
-    private void onImageCloseClick(View view) {
+    private void onImageDeleteClick(View view) {
         if (!mTransitioner.isRunning()) {
             disappearingImageIndex = containerLayout.indexOfChild(view);
             containerLayout.removeView(view);
@@ -894,20 +895,20 @@ public class SortRichEditor extends ScrollView {
     /**
      * 对外提供的接口, 生成编辑数据上传
      */
-    public List<EditData> buildEditData() {
-        List<EditData> dataList = new ArrayList<>();
+    public List<SortRichEditorData> buildEditData() {
+        List<SortRichEditorData> dataList = new ArrayList<>();
         int num = containerLayout.getChildCount();
         for (int index = 0; index < num; index++) {
             View itemView = containerLayout.getChildAt(index);
-            EditData itemData = new EditData();
+            SortRichEditorData itemData = new SortRichEditorData();
             if (itemView instanceof EditText) {
                 EditText item = (EditText) itemView;
-                itemData.inputStr = item.getText().toString();
+                itemData.setInputStr(item.getText().toString());
             } else if (itemView instanceof RelativeLayout) {
                 DataImageView item = (DataImageView) itemView
                         .findViewById(R.id.edit_imageView);
-                itemData.imagePath = item.getAbsolutePath();
-                itemData.bitmap = item.getBitmap();
+                itemData.setImagePath(item.getAbsolutePath());
+                itemData.setBitmap(item.getBitmap());
             }
             dataList.add(itemData);
         }
@@ -918,7 +919,7 @@ public class SortRichEditor extends ScrollView {
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
-        processSoftKeyBoard(false);
+//        processSoftKeyBoard(false);
     }
 
     @Override
@@ -1030,9 +1031,4 @@ public class SortRichEditor extends ScrollView {
         }
     }
 
-    public class EditData {
-        public String inputStr;
-        public String imagePath;
-        public Bitmap bitmap;
-    }
 }

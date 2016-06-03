@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.Window;
 
 import com.hitomi.sortricheditor.view.SortRichEditor;
+import com.hitomi.sortricheditor.view.SortRichEditorData;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     // 打开相机
                     openCamera();
                 } else if (v.getId() == btn3.getId()) {
-                    List<SortRichEditor.EditData> editList = editor.buildEditData();
+                    List<SortRichEditorData> editList = editor.buildEditData();
                     // 下面的代码可以上传、或者保存，请自行实现
                     editor.sort();
                     dealEditData(editList);
@@ -79,12 +80,12 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 负责处理编辑数据提交等事宜，请自行实现
      */
-    protected void dealEditData(List<SortRichEditor.EditData> editList) {
-        for (SortRichEditor.EditData itemData : editList) {
-            if (itemData.inputStr != null) {
-                Log.d("RichEditor", "commit inputStr=" + itemData.inputStr);
-            } else if (itemData.imagePath != null) {
-                Log.d("RichEditor", "commit imgePath=" + itemData.imagePath);
+    protected void dealEditData(List<SortRichEditorData> editList) {
+        for (SortRichEditorData itemData : editList) {
+            if (itemData.getInputStr() != null) {
+                Log.d("RichEditor", "commit inputStr=" + itemData.getInputStr());
+            } else if (itemData.getImagePath() != null) {
+                Log.d("RichEditor", "commit imgePath=" + itemData.getImagePath());
             }
 
         }
