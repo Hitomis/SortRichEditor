@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static Intent getTakePickIntent(File f) {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE, null);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-        System.out.println(111);
         return intent;
     }
 
