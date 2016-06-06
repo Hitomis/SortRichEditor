@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button btnPosts;
 
+    private String str;
+
     private File mCurrentPhotoFile;// 照相机拍照得到的图片
 
     public static Intent getTakePickIntent(File f) {
