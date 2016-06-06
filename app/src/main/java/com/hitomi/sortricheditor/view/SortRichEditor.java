@@ -43,15 +43,13 @@ import java.util.List;
  */
 public class SortRichEditor extends ScrollView {
 
-    private static final int DEFAULT_SCROLL_SPEED = 5;
-
     /**
      * 默认ImageView高度
      */
     public final int DEFAULT_IMAGE_HEIGHT = dip2px(170);
 
     /**
-     * 默认EditText高度
+     * 图文排序的时候，view默认缩小的高度
      */
     public final int SIZE_REDUCE_VIEW = dip2px(75);
 
@@ -69,6 +67,11 @@ public class SortRichEditor extends ScrollView {
      * ScrollView自滚动的系数因子【值越大，滚动越来越快，1为正常】
      */
     private final float scrollSensitivity = 1.02f;
+
+    /**
+     * 拖动排序的时候，当在ScrollView边界拖动时默认自滚动速度
+     */
+    private static final int DEFAULT_SCROLL_SPEED = 5;
 
     /**
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
@@ -150,8 +153,9 @@ public class SortRichEditor extends ScrollView {
      */
     private LayoutTransition mTransitioner;
 
-    private int disappearingImageIndex = 0;
-
+    /**
+     * 用于实现拖动效果的帮助类
+     */
     private ViewDragHelper viewDragHelper;
 
     /**
@@ -179,6 +183,8 @@ public class SortRichEditor extends ScrollView {
      * 容器相对于屏幕顶部和底部的长度值，用于排序拖动Child的时候判定ScrollView是否滚动
      */
     private int containerTopVal, containerBottomVal;
+
+    private int disappearingImageIndex = 0;
 
     private int scrollUpDistance = 5;
 
@@ -265,7 +271,6 @@ public class SortRichEditor extends ScrollView {
         etTitle.setFilters(filters);
         etTitle.setBackgroundResource(android.R.color.transparent);
         etTitle.setTextColor(Color.parseColor("#333333"));
-        etTitle.setOnFocusChangeListener(focusListener);
         etTitle.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -339,7 +344,7 @@ public class SortRichEditor extends ScrollView {
             public void onFocusChange(View v, boolean hasFocus) {
                 if (v instanceof RelativeLayout) { // 图片
                     processSoftKeyBoard(false);
-                } else if (v instanceof ImageView) {
+                } else if (v instanceof EditText) {
                     if (hasFocus) {
                         lastFocusEdit = (EditText) v;
                     }
@@ -458,9 +463,7 @@ public class SortRichEditor extends ScrollView {
         child.setFocusable(true);
         child.setFocusableInTouchMode(true);
         child.requestFocus();
-        if (child instanceof EditText) {
-            lastFocusEdit = (EditText) child;
-        }
+        lastFocusEdit = (EditText) child;
     }
 
     public boolean sort() {
@@ -478,6 +481,11 @@ public class SortRichEditor extends ScrollView {
         return isSort;
     }
 
+    /**
+     * 开始图文排序
+     * 图片与文字段落高度缩小为默认高度{@link #SIZE_REDUCE_VIEW}
+     * 且图片与文字可以上下拖动
+     */
     private void prepareSortUI() {
         int childCount = containerLayout.getChildCount();
 
@@ -534,6 +542,11 @@ public class SortRichEditor extends ScrollView {
         }
     }
 
+    /**
+     * 结束图文排序，图片还原为默认高度{@link #DEFAULT_IMAGE_HEIGHT}，文字还原为原本高度
+     * （其文字排序前的高度值保存在{@link #editTextHeightArray}中）
+     * 且图片文字不再可以上下拖动
+     */
     private void endSortUI() {
         int childCount = containerLayout.getChildCount();
         View child;
@@ -572,6 +585,7 @@ public class SortRichEditor extends ScrollView {
                 sortChild.setLayoutParams(resetChildLayoutParams(sortChild));
                 containerLayout.addView(sortChild);
             }
+
         } else { // 没有重新排列
             View preChild = containerLayout.getChildAt(childCount - 1);
             preChild.setLayoutParams(resetChildLayoutParams(preChild));
@@ -587,6 +601,13 @@ public class SortRichEditor extends ScrollView {
                 child.setLayoutParams(resetChildLayoutParams(child));
                 preChild = child;
             }
+        }
+
+        // 如果最后一个View不是EditText,那么再添加一个EditText
+        int lastIndex = containerLayout.getChildCount() - 1;
+        View view = containerLayout.getChildAt(lastIndex);
+        if (!(view instanceof EditText)) {
+            addEditTextAtIndex(lastIndex + 1, "");
         }
     }
 
@@ -629,14 +650,13 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 处理图片叉掉的点击事件
+     * 处理图片删除击事件
      *
      * @param view 整个image对应的relativeLayout view
-     * @type 删除类型 0代表backspace删除 1代表按红叉按钮删除
      */
     private void onImageDeleteClick(View view) {
         if (!mTransitioner.isRunning()) {
-            disappearingImageIndex = containerLayout.indexOfChild(view);
+//            disappearingImageIndex = containerLayout.indexOfChild(view);
             containerLayout.removeView(view);
         }
     }
@@ -894,6 +914,7 @@ public class SortRichEditor extends ScrollView {
 
     /**
      * 图片删除的时候，如果上下方都是EditText，则合并处理
+     * @deprecated
      */
     private void mergeEditText() {
         View preView = containerLayout.getChildAt(disappearingImageIndex - 1);
