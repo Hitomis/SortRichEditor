@@ -9,6 +9,9 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.ViewDragHelper;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -25,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.hitomi.sortricheditor.R;
 
@@ -127,14 +131,19 @@ public class SortRichEditor extends ScrollView {
     private OnClickListener deleteListener;
 
     /**
-     * EditText的焦点监听listener
+     * EditText和ImageView的焦点监听listener
      */
-    private OnFocusChangeListener editTextFocusListener;
+    private OnFocusChangeListener focusListener;
 
     /**
      * 最近获取焦点的一个EditText
      */
     private EditText lastFocusEdit;
+
+    /**
+     * 标题栏EditText
+     */
+    private DeletableEditText etTitle;
 
     /**
      * 添加或者删除图片View时的Transition动画
@@ -176,6 +185,8 @@ public class SortRichEditor extends ScrollView {
     private int scrollDownDistance = -5;
 
     private float currRawY;
+
+    private int titleWordLimitCount = 30;
 
     public SortRichEditor(Context context) {
         this(context, null);
@@ -234,25 +245,9 @@ public class SortRichEditor extends ScrollView {
 
         parentLayout.addView(titleLayout);
 
-        // 标题栏的ViewGroup中添加一个EditText，用来填写标题文本
-        EditText editText = new DeletableEditText(getContext());
-        editText.setHint("请输入帖子标题");
-        editText.setGravity(Gravity.TOP);
-        editText.setCursorVisible(true);
-        editText.setBackgroundResource(android.R.color.transparent);
-        editText.setTextColor(Color.parseColor("#333333"));
-        editText.setOnFocusChangeListener(editTextFocusListener);
-
-        LinearLayout.LayoutParams editTitleLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        editTitleLayoutParams.leftMargin = DEFAULT_MARGING;
-        editTitleLayoutParams.rightMargin = DEFAULT_MARGING;
-        editText.setLayoutParams(editTitleLayoutParams);
-
-        titleLayout.addView(editText);
-
-        // 标题栏的ViewGroup中添加一个显示字数限制的提醒TextView
-        TextView tvTextLimit = new TextView(getContext());
-        tvTextLimit.setText("19/30");
+        // 标题栏的ViewGroup中添加一个显示字数限制的提醒TextView(先创建，待先插入标题栏EditText之后再插入tvTextLimit)
+        final TextView tvTextLimit = new TextView(getContext());
+        tvTextLimit.setText(String.format("0/%d", titleWordLimitCount));
         tvTextLimit.setTextColor(Color.parseColor("#aaaaaa"));
         tvTextLimit.setTextSize(13);
 
@@ -260,6 +255,37 @@ public class SortRichEditor extends ScrollView {
         textLimitLayoutParams.rightMargin = DEFAULT_MARGING;
         textLimitLayoutParams.gravity = Gravity.RIGHT;
         tvTextLimit.setLayoutParams(textLimitLayoutParams);
+
+        // 标题栏的ViewGroup中添加一个EditText，用来填写标题文本
+        etTitle = new DeletableEditText(getContext());
+        etTitle.setHint("请输入帖子标题");
+        etTitle.setGravity(Gravity.TOP);
+        etTitle.setCursorVisible(true);
+        InputFilter[] filters = {new InputFilter.LengthFilter(titleWordLimitCount)};
+        etTitle.setFilters(filters);
+        etTitle.setBackgroundResource(android.R.color.transparent);
+        etTitle.setTextColor(Color.parseColor("#333333"));
+        etTitle.setOnFocusChangeListener(focusListener);
+        etTitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String titleStr = etTitle.getText().toString();
+                tvTextLimit.setText(String.format("%d/%d", titleStr.length(), titleWordLimitCount));
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        LinearLayout.LayoutParams editTitleLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        editTitleLayoutParams.leftMargin = DEFAULT_MARGING;
+        editTitleLayoutParams.rightMargin = DEFAULT_MARGING;
+        etTitle.setLayoutParams(editTitleLayoutParams);
+
+        titleLayout.addView(etTitle);
 
         titleLayout.addView(tvTextLimit);
     }
@@ -307,13 +333,18 @@ public class SortRichEditor extends ScrollView {
             }
         };
 
-        editTextFocusListener = new OnFocusChangeListener() {
+        focusListener = new OnFocusChangeListener() {
 
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    lastFocusEdit = (EditText) v;
+                if (v instanceof RelativeLayout) { // 图片
+                    processSoftKeyBoard(false);
+                } else if (v instanceof ImageView) {
+                    if (hasFocus) {
+                        lastFocusEdit = (EditText) v;
+                    }
                 }
+
             }
         };
     }
@@ -438,6 +469,7 @@ public class SortRichEditor extends ScrollView {
         if (isSort) {
             prepareSortUI();
             prepareSortConfig();
+            processSoftKeyBoard(false);
         } else {
             endSortUI();
         }
@@ -445,7 +477,6 @@ public class SortRichEditor extends ScrollView {
         containerLayout.setLayoutTransition(mTransitioner);
         return isSort;
     }
-
 
     private void prepareSortUI() {
         int childCount = containerLayout.getChildCount();
@@ -468,6 +499,10 @@ public class SortRichEditor extends ScrollView {
             if (child instanceof ImageView) {
                 removeChildList.add(child);
                 continue;
+            }
+
+            if (child instanceof RelativeLayout) {
+                setFocusOnView(child, false);
             }
 
             int tagID = Integer.parseInt(child.getTag().toString());
@@ -531,6 +566,9 @@ public class SortRichEditor extends ScrollView {
             // 3、依据顺序已排好并且“用于编辑文字的图片”也插入完毕的sortViewList，依次往containerLayout中添加子View
             containerLayout.removeAllViews();
             for (View sortChild : sortViewList) {
+                if (sortChild instanceof RelativeLayout) {
+                    setFocusOnView(sortChild, true);
+                }
                 sortChild.setLayoutParams(resetChildLayoutParams(sortChild));
                 containerLayout.addView(sortChild);
             }
@@ -539,6 +577,9 @@ public class SortRichEditor extends ScrollView {
             preChild.setLayoutParams(resetChildLayoutParams(preChild));
             for (int i = childCount - 2; i >= 0; i--) {
                 child = containerLayout.getChildAt(i);
+                if (child instanceof RelativeLayout) {
+                    setFocusOnView(child, true);
+                }
                 // 紧邻的两个View都是ImageView
                 if (preChild instanceof RelativeLayout && child instanceof RelativeLayout) {
                     addInsertEditTextImageView(i + 1);
@@ -637,14 +678,14 @@ public class SortRichEditor extends ScrollView {
      */
     private EditText createEditText(String hint) {
         EditText editText = new DeletableEditText(getContext());
-        editText.setOnKeyListener(editTextKeyListener);
         editText.setTag(viewTagID++);
         editText.setHint(hint);
         editText.setGravity(Gravity.TOP);
         editText.setCursorVisible(true);
         editText.setBackgroundResource(android.R.color.transparent);
         editText.setTextColor(Color.parseColor("#333333"));
-        editText.setOnFocusChangeListener(editTextFocusListener);
+        editText.setOnKeyListener(editTextKeyListener);
+        editText.setOnFocusChangeListener(focusListener);
 
         // 调整EditText的外边距
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -663,6 +704,7 @@ public class SortRichEditor extends ScrollView {
     private RelativeLayout createImageLayout() {
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.layout_imageview, null);
         layout.setTag(viewTagID++);
+        setFocusOnView(layout, true);
         View closeView = layout.findViewById(R.id.image_close);
         closeView.setTag(layout.getTag());
         closeView.setOnClickListener(deleteListener);
@@ -676,6 +718,17 @@ public class SortRichEditor extends ScrollView {
         layout.setLayoutParams(lp);
 
         return layout;
+    }
+
+    private void setFocusOnView(View view, boolean isFocusable) {
+        view.setClickable(isFocusable);
+        view.setFocusable(isFocusable);
+        view.setFocusableInTouchMode(isFocusable);
+        if (isFocusable) {
+            view.setOnFocusChangeListener(focusListener);
+        } else {
+            view.setOnFocusChangeListener(null);
+        }
     }
 
     /**
@@ -696,6 +749,12 @@ public class SortRichEditor extends ScrollView {
         int cursorIndex = lastFocusEdit.getSelectionStart();
         String lastStr = lastEditStr.substring(0, cursorIndex).trim();
         int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
+
+        View firstView = containerLayout.getChildAt(0);
+        if (containerLayout.getChildCount() == 1 && firstView == lastFocusEdit) {
+            lastFocusEdit = (EditText) firstView;
+            lastFocusEdit.setHint("");
+        }
 
         if (lastEditStr.length() == 0 || lastStr.length() == 0) {
             // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片，并且EditText下移即可
