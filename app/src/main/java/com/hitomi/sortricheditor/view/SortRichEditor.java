@@ -244,7 +244,7 @@ public class SortRichEditor extends ScrollView {
         // 创建标题栏的ViewGroup
         titleLayout = new LinearLayout(getContext());
         titleLayout.setOrientation(LinearLayout.VERTICAL);
-        titleLayout.setPadding(0, DEFAULT_MARGING, 0, dip2px(10));
+        titleLayout.setPadding(0, DEFAULT_MARGING, 0, DEFAULT_MARGING);
 
         LinearLayout.LayoutParams titleLayoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         titleLayout.setLayoutParams(titleLayoutParams);
@@ -328,7 +328,7 @@ public class SortRichEditor extends ScrollView {
             }
         };
 
-        // 3. 图片叉掉处理
+        // 图片删除处理
         deleteListener = new OnClickListener() {
 
             @Override
@@ -424,7 +424,7 @@ public class SortRichEditor extends ScrollView {
 
 
         };
-        containerLayout.setPadding(0, dip2px(10), 0, dip2px(10));
+        containerLayout.setPadding(0, DEFAULT_MARGING, 0, DEFAULT_MARGING);
         containerLayout.setOrientation(LinearLayout.VERTICAL);
         containerLayout.setBackgroundColor(Color.WHITE);
         containerLayout.setLayoutParams(layoutParams);

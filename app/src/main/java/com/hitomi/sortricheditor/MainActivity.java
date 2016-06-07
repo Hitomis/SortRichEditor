@@ -101,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else if (itemData.getImagePath() != null) {
                 Log.d("RichEditor", "commit imgePath=" + itemData.getImagePath());
             }
-
         }
     }
 
