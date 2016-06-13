@@ -656,7 +656,26 @@ public class SortRichEditor extends ScrollView {
      */
     private void onImageDeleteClick(View view) {
         if (!mTransitioner.isRunning()) {
-//            disappearingImageIndex = containerLayout.indexOfChild(view);
+            int index = containerLayout.indexOfChild(view);
+            int nextIndex = index + 1;
+            int lastIndex = index - 1;
+
+            View child;
+            if (index == 0) { // 删除图片位于第一个位置，只检查下一个位置的View是否为“可编辑文本”的图标
+                child = containerLayout.getChildAt(nextIndex);
+            } else {
+                // 先检查上一个位置的View是否为“可编辑文本”的图标，如果不是就检查下一个位置的View
+                child = containerLayout.getChildAt(lastIndex);
+                if (!(child instanceof ImageView)) {
+                    child = containerLayout.getChildAt(nextIndex);
+                }
+            }
+
+            if (child instanceof ImageView) {
+                // 如果该View是“可编辑文本”的图标，则一并删除
+                containerLayout.removeView(child);
+            }
+
             containerLayout.removeView(view);
         }
     }
