@@ -38,15 +38,16 @@ public abstract class BaseAdapterHelper<T> extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		final ViewHolder viewHolder = getViewHolder(position, convertView, parent);
-		convert(viewHolder, getItem(position));
+		final ViewHolder viewHolder = getViewHolder(convertView, parent);
+		convert(viewHolder, getItem(position), position);
+		System.out.println(position);
 		return viewHolder.getConvertView();
 	}
 	
-	public abstract void convert(ViewHolder viewHolder, T item);
+	public abstract void convert(ViewHolder viewHolder, T item, int position);
 	
-	private ViewHolder getViewHolder(int position, View convertView, ViewGroup parent){
-		return ViewHolder.get(context, convertView, parent, itemLayoutID, position);
+	private ViewHolder getViewHolder(View convertView, ViewGroup parent){
+		return ViewHolder.get(context, convertView, parent, itemLayoutID);
 	}
 
 	public void setDataList(List<T> dataList) {

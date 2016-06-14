@@ -8,10 +8,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.yifang.ui.YFImageView;
-import com.yifangwang.view.CircleYFImageView;
-
-
 public class ViewHolder {
 
     /**
@@ -21,10 +17,7 @@ public class ViewHolder {
 
     private View convertView;
 
-    private int position;
-
-    private ViewHolder(Context context, ViewGroup parent, int layoutID, int position) {
-        this.position = position;
+    private ViewHolder(Context context, ViewGroup parent, int layoutID) {
         this.views = new SparseArray<View>();
         this.convertView = LayoutInflater.from(context).inflate(layoutID, parent, false);
         convertView.setTag(this);
@@ -37,12 +30,11 @@ public class ViewHolder {
      * @param convertView
      * @param parent
      * @param layoutID    item视图 布局ID
-     * @param position
      * @return
      */
-    public static ViewHolder get(Context context, View convertView, ViewGroup parent, int layoutID, int position) {
+    public static ViewHolder get(Context context, View convertView, ViewGroup parent, int layoutID) {
         if (convertView == null) {
-            return new ViewHolder(context, parent, layoutID, position);
+            return new ViewHolder(context, parent, layoutID);
         } else {
             return (ViewHolder) convertView.getTag();
         }
@@ -66,10 +58,6 @@ public class ViewHolder {
 
     public View getConvertView() {
         return convertView;
-    }
-
-    public int getPosition() {
-        return position;
     }
 
     /**
@@ -109,31 +97,4 @@ public class ViewHolder {
         view.setImageResource(imageResource);
         return this;
     }
-
-    /**
-     *  设置YFImageView的网络图片
-     * @param viewId
-     * @param url 图片url地址
-     * @return
-     */
-    public ViewHolder setImageUrl(int viewId, String url) {
-        YFImageView view = getView(viewId);
-        view.setImageHttp(url);
-        return this;
-    }
-
-    /**
-     *  设置CircleYFImageView的网络图片
-     * @param viewId
-     * @param url 图片url地址
-     * @return
-     */
-    public ViewHolder setCirCleImageUrl(int viewId, String url) {
-        CircleYFImageView view = getView(viewId);
-        view.setImageHttp(url);
-        return this;
-    }
-
-
-
 }
