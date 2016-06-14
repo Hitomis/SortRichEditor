@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SortRichEditor</string>
+
+    <item name="tag_position" type="id" />
+    <item name="tag_photo" type="id" />
+
 </resources>
