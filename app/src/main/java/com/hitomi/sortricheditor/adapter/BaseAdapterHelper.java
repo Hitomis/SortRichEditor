@@ -40,7 +40,6 @@ public abstract class BaseAdapterHelper<T> extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final ViewHolder viewHolder = getViewHolder(convertView, parent);
 		convert(viewHolder, getItem(position), position);
-		System.out.println(position);
 		return viewHolder.getConvertView();
 	}
 	
