@@ -63,9 +63,6 @@ public class ImageLoader {
 
 	/**
 	 * 队列的调度方式
-	 * 
-	 * @author zhy
-	 * 
 	 */
 	public enum Type {
 		FIFO, LIFO
@@ -227,7 +224,8 @@ public class ImageLoader {
 
 	/**
 	 * 单例获得该实例对象
-	 * 
+	 * @param threadCount 线程数
+	 * @param type 队列调度方式
 	 * @return
 	 */
 	public static ImageLoader getInstance(int threadCount, Type type) {
