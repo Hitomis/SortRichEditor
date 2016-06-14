@@ -28,18 +28,19 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.hitomi.sortricheditor.R;
+import com.hitomi.sortricheditor.model.SortRichEditorData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 富文本编辑器
- * 1、支持图片文字混排和编辑
- * 2、支持文字中间插入图片
- * 3、支持图片文字排序
+ * 1、支持图片文字添加、修改、删除
+ * 2、支持图片文字混排
+ * 3、支持文字中间随意插入图片
+ * 4、支持图片文字任意排序
  */
 public class SortRichEditor extends ScrollView {
 
