@@ -1,13 +1,14 @@
 package com.hitomi.sortricheditor.ui;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 public class PhotoPickerActivity extends AppCompatActivity implements View.OnClickListener{
+
+    public static final String INTENT_PHOTO_PATHS = "photo_paths";;
 
     private static final int LATEST_PHOTO_NUM = 100;
 
@@ -85,11 +88,11 @@ public class PhotoPickerActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void run() {
                 photoPathList = getLatestPhotoPaths(LATEST_PHOTO_NUM);
-                latestPhotoPathList = new ArrayList<String>(photoPathList);
+                latestPhotoPathList = new ArrayList<>(photoPathList);
                 photoPackList = getAllPhotoPaths();
 
                 PhotoPack LatestPhotoPack = new PhotoPack();
-                LatestPhotoPack.setFileCount(LATEST_PHOTO_NUM);
+                LatestPhotoPack.setFileCount(photoPathList.size());
                 LatestPhotoPack.setPathName(LATEST_PHOTO_STR);
                 LatestPhotoPack.setTitle(LATEST_PHOTO_STR);
                 LatestPhotoPack.setFirstPhotoPath(photoPathList.get(0));
@@ -109,6 +112,10 @@ public class PhotoPickerActivity extends AppCompatActivity implements View.OnCli
                 break;
 
             case R.id.tv_complete:
+                Intent dataIntent = new Intent();
+                dataIntent.putExtra(INTENT_PHOTO_PATHS, photoWallAdapter.getSelectPhotoPathArray());
+                setResult(RESULT_OK, dataIntent);
+                finish();
                 break;
 
             case R.id.tv_picker:
@@ -146,6 +153,7 @@ public class PhotoPickerActivity extends AppCompatActivity implements View.OnCli
                             photoPathList = getPhotosByFolder(photoPack.getPathName());
                         }
 
+                        photoWallAdapter.cutoverSelectArray(photoPack);
                         photoWallAdapter.setDataList(photoPathList);
                         photoWallAdapter.notifyDataSetChanged();
                     }
@@ -157,7 +165,8 @@ public class PhotoPickerActivity extends AppCompatActivity implements View.OnCli
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            photoWallAdapter = new PhotoWallAdapter(PhotoPickerActivity.this, photoPathList, R.layout.item_photo_picker);
+            photoWallAdapter = new PhotoWallAdapter(PhotoPickerActivity.this, photoPathList,
+                    R.layout.item_photo_picker, photoPackList.get(0));
             gvPhotoWall.setAdapter(photoWallAdapter);
 
             tvPicker.setText(photoPackList.get(0).getTitle());
