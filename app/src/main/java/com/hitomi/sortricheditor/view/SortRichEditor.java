@@ -186,8 +186,6 @@ public class SortRichEditor extends ScrollView {
      */
     private int containerTopVal, containerBottomVal;
 
-    private int disappearingImageIndex = 0;
-
     private int scrollUpDistance = 5;
 
     private int scrollDownDistance = -5;
@@ -963,53 +961,7 @@ public class SortRichEditor extends ScrollView {
     private void setupLayoutTransitions(LinearLayout containerLayout) {
         mTransitioner = new LayoutTransition();
         containerLayout.setLayoutTransition(mTransitioner);
-        mTransitioner.addTransitionListener(new TransitionListener() {
-
-            @Override
-            public void startTransition(LayoutTransition transition,
-                                        ViewGroup container, View view, int transitionType) {
-
-            }
-
-            @Override
-            public void endTransition(LayoutTransition transition,
-                                      ViewGroup container, View view, int transitionType) {
-                if (!transition.isRunning()
-                        && transitionType == LayoutTransition.CHANGE_DISAPPEARING) {
-                    // transition动画结束，合并EditText
-                    // mergeEditText();
-                }
-            }
-        });
         mTransitioner.setDuration(300);
-    }
-
-    /**
-     * 图片删除的时候，如果上下方都是EditText，则合并处理
-     * @deprecated
-     */
-    private void mergeEditText() {
-        View preView = containerLayout.getChildAt(disappearingImageIndex - 1);
-        View nextView = containerLayout.getChildAt(disappearingImageIndex);
-        if (null != preView && preView instanceof EditText && null != nextView && nextView instanceof EditText) {
-            EditText preEdit = (EditText) preView;
-            EditText nextEdit = (EditText) nextView;
-            String str1 = preEdit.getText().toString();
-            String str2 = nextEdit.getText().toString();
-            String mergeText = "";
-            if (str2.length() > 0) {
-                mergeText = str1 + "\n" + str2;
-            } else {
-                mergeText = str1;
-            }
-
-            containerLayout.setLayoutTransition(null);
-            containerLayout.removeView(nextEdit);
-            preEdit.setText(mergeText);
-            preEdit.requestFocus();
-            preEdit.setSelection(str1.length(), str1.length());
-            containerLayout.setLayoutTransition(mTransitioner);
-        }
     }
 
     /**
@@ -1018,19 +970,9 @@ public class SortRichEditor extends ScrollView {
      * @param dipValue dp值
      * @return 像素值
      */
-    public int dip2px(float dipValue) {
+    private int dip2px(float dipValue) {
         float m = getContext().getResources().getDisplayMetrics().density;
         return (int) (dipValue * m + 0.5f);
-    }
-
-    /**
-     * sp转换为px
-     * @param spValue
-     * @return
-     */
-    public int sp2px(float spValue) {
-        final float fontScale = getContext().getResources().getDisplayMetrics().scaledDensity;
-        return (int) (spValue * fontScale + 0.5f);
     }
 
     private void prepareSortConfig() {
