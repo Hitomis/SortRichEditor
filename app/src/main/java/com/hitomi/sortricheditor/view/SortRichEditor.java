@@ -41,6 +41,7 @@ import java.util.List;
  * 2、支持图片文字混排
  * 3、支持文字中间随意插入图片
  * 4、支持图片文字任意排序
+ * 5、支持排序模式下删除图片
  */
 public class SortRichEditor extends ScrollView {
 
@@ -677,7 +678,31 @@ public class SortRichEditor extends ScrollView {
                 containerLayout.removeView(child);
             }
 
+            resortChildPositionByDeleteView(view);
+
             containerLayout.removeView(view);
+        }
+    }
+
+    /**
+     * 排序模式下，删除图片时重新更新 {@link #preSortPositionArray} 中position值
+     * @param view
+     */
+    private void resortChildPositionByDeleteView(View view) {
+        if (isSort) {
+            int tagID = Integer.parseInt(view.getTag().toString());
+            int delViewPos = preSortPositionArray.get(tagID);
+            int pos;
+            for (int i = 0; i < preSortPositionArray.size(); i++) {
+                pos = preSortPositionArray.valueAt(i);
+
+                if (pos > delViewPos) {
+                    // 如果view的位置在删除的view的下面，就把位置移动到在它的上一个View的位置（SIZE_REDUCE_VIEW + DEFAULT_MARGING）
+                    pos -= SIZE_REDUCE_VIEW + DEFAULT_MARGING;
+                    preSortPositionArray.put(preSortPositionArray.keyAt(i), pos);
+                }
+            }
+            preSortPositionArray.remove(tagID);
         }
     }
 
@@ -1032,6 +1057,9 @@ public class SortRichEditor extends ScrollView {
         }
     }
 
+    /**
+     * 重新排列Child的位置，更新{@link #preSortPositionArray} 中的position
+     */
     private void resetChildPostion() {
         indexArray.clear();
         View child;
@@ -1103,7 +1131,8 @@ public class SortRichEditor extends ScrollView {
                     changeViewPosition = preSortPositionArray.get(changeViewTagID);
                     sortViewPosition = preSortPositionArray.get(sortViewTagID);
 
-                    if (changedView.getTop() > sortChild.getTop() && changeViewPosition < sortViewPosition) {
+                    if ((changedView.getTop() > sortChild.getTop() && changeViewPosition < sortViewPosition) ||
+                            (changedView.getTop() < sortChild.getTop() && changeViewPosition > sortViewPosition)) {
 
                         sortChild.setTop(changeViewPosition);
                         sortChild.setBottom(changeViewPosition + SIZE_REDUCE_VIEW);
@@ -1111,15 +1140,6 @@ public class SortRichEditor extends ScrollView {
                         preSortPositionArray.put(sortViewTagID, changeViewPosition);
                         preSortPositionArray.put(changeViewTagID, sortViewPosition);
 
-                        resetChildPostion();
-                        break;
-                    } else if (changedView.getTop() < sortChild.getTop() && changeViewPosition > sortViewPosition) {
-
-                        sortChild.setTop(changeViewPosition);
-                        sortChild.setBottom(changeViewPosition + SIZE_REDUCE_VIEW);
-
-                        preSortPositionArray.put(sortViewTagID, changeViewPosition);
-                        preSortPositionArray.put(changeViewTagID, sortViewPosition);
                         resetChildPostion();
                         break;
                     }
