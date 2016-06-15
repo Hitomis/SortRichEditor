@@ -7,4 +7,7 @@
         android:color="#4CA4E9"
         android:dashGap="3dip"
         android:dashWidth="4dip" />
+
+    <solid android:color="@android:color/white" />
+
 </shape>
