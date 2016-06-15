@@ -598,7 +598,7 @@ public class SortRichEditor extends ScrollView {
                 }
                 // 紧邻的两个View都是ImageView
                 if (preChild instanceof RelativeLayout && child instanceof RelativeLayout) {
-                    addInsertEditTextImageView(i + 1);
+                    insertEditTextImageView(i + 1);
                 }
                 child.setLayoutParams(resetChildLayoutParams(child));
                 preChild = child;
@@ -609,7 +609,7 @@ public class SortRichEditor extends ScrollView {
         int lastIndex = containerLayout.getChildCount() - 1;
         View view = containerLayout.getChildAt(lastIndex);
         if (!(view instanceof EditText)) {
-            addEditTextAtIndex(lastIndex + 1, "");
+            insertEditTextAtIndex(lastIndex + 1, "");
         }
     }
 
@@ -723,7 +723,7 @@ public class SortRichEditor extends ScrollView {
             public void onClick(View v) {
                 int index = containerLayout.indexOfChild(ivInsertEditText);
                 containerLayout.removeView(ivInsertEditText);
-                EditText editText = addEditTextAtIndex(index, "");
+                EditText editText = insertEditTextAtIndex(index, "");
                 requestTriggerFocus(editText);
                 processSoftKeyBoard(true);
             }
@@ -797,19 +797,41 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 根据绝对路径添加view
+     * 根据图片绝对路径集合批量添加一组图片
+     * @param imageList
+     */
+    public void addImageList(List<String> imageList) {
+        for (String imagePath : imageList) {
+            Bitmap bmp = getScaledBitmap(imagePath, getWidth());
+            insertImage(bmp, imagePath, true);
+        }
+    }
+
+    /**
+     * 根据图片绝对路径数组批量添加一组图片
+     * @param imagePaths
+     */
+    public void addImageArray(String[] imagePaths) {
+        for (String imagePath : imagePaths) {
+            Bitmap bmp = getScaledBitmap(imagePath, getWidth());
+            insertImage(bmp, imagePath, true);
+        }
+    }
+
+    /**
+     * 根据绝对路径添加一张图片
      *
      * @param imagePath
      */
-    public void insertImage(String imagePath) {
+    public void addImage(String imagePath) {
         Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-        insertImage(bmp, imagePath);
+        insertImage(bmp, imagePath, false);
     }
 
     /**
      * 插入一张图片
      */
-    private void insertImage(Bitmap bitmap, String imagePath) {
+    private void insertImage(Bitmap bitmap, String imagePath, boolean isBatch) {
         String lastEditStr = lastFocusEdit.getText().toString();
         int cursorIndex = lastFocusEdit.getSelectionStart();
         String lastStr = lastEditStr.substring(0, cursorIndex).trim();
@@ -823,17 +845,17 @@ public class SortRichEditor extends ScrollView {
 
         if (lastEditStr.length() == 0 || lastStr.length() == 0) {
             // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片，并且EditText下移即可
-            addImageViewAtIndex(lastEditIndex, bitmap, imagePath);
+            insertImageViewAtIndex(lastEditIndex, bitmap, imagePath, isBatch);
         } else {
             // 如果EditText非空且光标不在最顶端，则需要添加新的imageView和EditText
             lastFocusEdit.setText(lastStr);
             String editStr2 = lastEditStr.substring(cursorIndex).trim();
             if (containerLayout.getChildCount() - 1 == lastEditIndex
                     || editStr2.length() > 0) {
-                addEditTextAtIndex(lastEditIndex + 1, editStr2);
+                insertEditTextAtIndex(lastEditIndex + 1, editStr2);
             }
 
-            addImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath);
+            insertImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath, isBatch);
             lastFocusEdit.requestFocus();
             lastFocusEdit.setSelection(lastStr.length(), lastStr.length());
         }
@@ -857,7 +879,7 @@ public class SortRichEditor extends ScrollView {
      * 在指定位置添加一个“将来用于编辑文字的图片”
      * @param index
      */
-    private void addInsertEditTextImageView(int index) {
+    private void insertEditTextImageView(int index) {
         ImageView ivInsertEditText = createInsertEditTextImageView();
         containerLayout.addView(ivInsertEditText, index);
     }
@@ -868,7 +890,7 @@ public class SortRichEditor extends ScrollView {
      * @param index   位置
      * @param editStr EditText显示的文字
      */
-    private EditText addEditTextAtIndex(final int index, String editStr) {
+    private EditText insertEditTextAtIndex(final int index, String editStr) {
         EditText editText = createEditText("");
         editText.setText(editStr);
 
@@ -882,19 +904,19 @@ public class SortRichEditor extends ScrollView {
     /**
      * 在指定位置添加ImageView
      */
-    private void addImageViewAtIndex(int index, Bitmap bmp, String imagePath) {
+    private void insertImageViewAtIndex(int index, Bitmap bmp, String imagePath, boolean isBatch) {
         if (index > 0) {
             View currChild = containerLayout.getChildAt(index);
             // 当前index位置的child是ImageView，则在插入本ImageView的时候，多插入一个图标，用于将来可以插入EditText
             if (currChild instanceof RelativeLayout) {
-                addInsertEditTextImageView(index);
+                insertEditTextImageView(index);
             }
 
             int lastIndex = index - 1;
             View child = containerLayout.getChildAt(lastIndex);
             // index位置的上一个child是ImageView，则在插入本ImageView的时候，多插入一个图标，用于将来可以插入EditText
             if (child instanceof RelativeLayout) {
-                addInsertEditTextImageView(index++);
+                insertEditTextImageView(index++);
             }
         }
 
@@ -906,12 +928,17 @@ public class SortRichEditor extends ScrollView {
 
         // onActivityResult无法触发动画，此处post处理
         final int finalIndex = index;
-        containerLayout.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                containerLayout.addView(imageLayout, finalIndex);
-            }
-        }, 200);
+        if (isBatch) {
+            containerLayout.addView(imageLayout, finalIndex);
+        } else {
+            containerLayout.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    containerLayout.addView(imageLayout, finalIndex);
+                }
+            }, 200);
+        }
+
     }
 
     /**
