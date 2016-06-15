@@ -1,7 +1,6 @@
 package com.hitomi.sortricheditor.view;
 
 import android.animation.LayoutTransition;
-import android.animation.LayoutTransition.TransitionListener;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -34,6 +33,9 @@ import com.hitomi.sortricheditor.model.SortRichEditorData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 富文本编辑器
@@ -41,7 +43,6 @@ import java.util.List;
  * 2、支持图片文字混排
  * 3、支持文字中间随意插入图片
  * 4、支持图片文字任意排序
- * 5、支持排序模式下删除图片
  */
 public class SortRichEditor extends ScrollView {
 
@@ -66,14 +67,14 @@ public class SortRichEditor extends ScrollView {
     private final int DEFAULT_MARGING = dip2px(15);
 
     /**
-     * ScrollView自滚动的系数因子【值越大，滚动越来越快，1为正常】
-     */
-    private final float scrollSensitivity = 1.02f;
-
-    /**
      * 拖动排序的时候，当在ScrollView边界拖动时默认自滚动速度
      */
-    private static final int DEFAULT_SCROLL_SPEED = 5;
+    private final int DEFAULT_SCROLL_SPEED = dip2px(15);
+
+    /**
+     * 标题字数限制
+     */
+    private static final int TITLE_WORD_LIMIT_COUNT = 30;
 
     /**
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
@@ -186,13 +187,22 @@ public class SortRichEditor extends ScrollView {
      */
     private int containerTopVal, containerBottomVal;
 
-    private int scrollUpDistance = 5;
+    /**
+     * 循环线程执行器，用于拖动view到边缘时ScrollView自动滚动功能
+     */
+    private ScheduledExecutorService scheduledExecutorService;
 
-    private int scrollDownDistance = -5;
+    /**
+     * 是否正在自动滚动
+     */
+    private boolean isAutoScroll;
+
+    /**
+     * 自动滚动速度向量
+     */
+    private int scrollVector;
 
     private float currRawY;
-
-    private int titleWordLimitCount = 30;
 
     public SortRichEditor(Context context) {
         this(context, null);
@@ -253,7 +263,7 @@ public class SortRichEditor extends ScrollView {
 
         // 标题栏的ViewGroup中添加一个显示字数限制的提醒TextView(先创建，待先插入标题栏EditText之后再插入tvTextLimit)
         final TextView tvTextLimit = new TextView(getContext());
-        tvTextLimit.setText(String.format("0/%d", titleWordLimitCount));
+        tvTextLimit.setText(String.format("0/%d", TITLE_WORD_LIMIT_COUNT));
         tvTextLimit.setTextColor(Color.parseColor("#aaaaaa"));
         tvTextLimit.setTextSize(13);
 
@@ -267,7 +277,7 @@ public class SortRichEditor extends ScrollView {
         etTitle.setHint("请输入帖子标题");
         etTitle.setGravity(Gravity.TOP);
         etTitle.setCursorVisible(true);
-        InputFilter[] filters = {new InputFilter.LengthFilter(titleWordLimitCount)};
+        InputFilter[] filters = {new InputFilter.LengthFilter(TITLE_WORD_LIMIT_COUNT)};
         etTitle.setFilters(filters);
         etTitle.setBackgroundResource(android.R.color.transparent);
         etTitle.setTextColor(Color.parseColor("#333333"));
@@ -278,7 +288,7 @@ public class SortRichEditor extends ScrollView {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String titleStr = etTitle.getText().toString();
-                tvTextLimit.setText(String.format("%d/%d", titleStr.length(), titleWordLimitCount));
+                tvTextLimit.setText(String.format("%d/%d", titleStr.length(), TITLE_WORD_LIMIT_COUNT));
             }
 
             @Override
@@ -369,11 +379,37 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 创建文本内容容器
+     * 停止ScrollView的自动滚动
+     */
+    private void stopOverEdgeAutoScroll() {
+        if (isAutoScroll) {
+            scheduledExecutorService.shutdownNow();
+            isAutoScroll = false;
+        }
+    }
+
+    /**
+     * 拖动view到或者超出边缘时，ScrollView开始自动滚动
+     */
+    private void startOverEdgeAutoScroll() {
+        if (!isAutoScroll) {
+            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    SortRichEditor.this.scrollBy(0, scrollVector);
+                }
+            }, 0, 15, TimeUnit.MILLISECONDS);
+            isAutoScroll = true;
+        }
+    }
+
+    /**
+     * 创建图片文本内容容器
      * @return
      */
-    @NonNull
-    private LinearLayout createContaniner() {
+        @NonNull
+        private LinearLayout createContaniner() {
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         final LinearLayout containerLayout = new LinearLayout(getContext()) {
             @Override
@@ -392,21 +428,18 @@ public class SortRichEditor extends ScrollView {
                         if (isSort) {
                             currRawY = event.getRawY();
                             if (currRawY > containerBottomVal) { // 内容上滚动
-                                scrollUpDistance = (int) Math.ceil(scrollUpDistance * scrollSensitivity);
-                                SortRichEditor.this.scrollBy(0, scrollUpDistance);
-                            }
-                            if (currRawY < containerTopVal) { // 内容下滚动
-                                scrollDownDistance = (int) Math.floor(scrollDownDistance * scrollSensitivity);
-                                SortRichEditor.this.scrollBy(0, scrollDownDistance);
-                            }
-                            if (currRawY > containerTopVal && currRawY < containerBottomVal) {
-                                resetScrollSpeed();
+                                scrollVector = DEFAULT_SCROLL_SPEED;
+                                startOverEdgeAutoScroll();
+                            } else if (currRawY < containerTopVal) { // 内容下滚动
+                                scrollVector = -DEFAULT_SCROLL_SPEED;
+                                startOverEdgeAutoScroll();
+                            }else {
+                                stopOverEdgeAutoScroll();
                             }
                         }
-
                         break;
                     case MotionEvent.ACTION_UP:
-                        resetScrollSpeed();
+                        stopOverEdgeAutoScroll();
                         break;
                 }
                 return true;
@@ -430,11 +463,6 @@ public class SortRichEditor extends ScrollView {
         containerLayout.setLayoutParams(layoutParams);
         setupLayoutTransitions(containerLayout);
         return containerLayout;
-    }
-
-    private void resetScrollSpeed() {
-        scrollUpDistance = DEFAULT_SCROLL_SPEED;
-        scrollDownDistance = -DEFAULT_SCROLL_SPEED;
     }
 
     /**
@@ -510,6 +538,7 @@ public class SortRichEditor extends ScrollView {
             }
 
             if (child instanceof RelativeLayout) {
+                child.findViewById(R.id.image_close).setVisibility(View.GONE);
                 setFocusOnView(child, false);
             }
 
@@ -580,6 +609,7 @@ public class SortRichEditor extends ScrollView {
             containerLayout.removeAllViews();
             for (View sortChild : sortViewList) {
                 if (sortChild instanceof RelativeLayout) {
+                    sortChild.findViewById(R.id.image_close).setVisibility(View.VISIBLE);
                     setFocusOnView(sortChild, true);
                 }
                 sortChild.setLayoutParams(resetChildLayoutParams(sortChild));
@@ -676,31 +706,7 @@ public class SortRichEditor extends ScrollView {
                 containerLayout.removeView(child);
             }
 
-            resortChildPositionByDeleteView(view);
-
             containerLayout.removeView(view);
-        }
-    }
-
-    /**
-     * 排序模式下，删除图片时重新更新 {@link #preSortPositionArray} 中position值
-     * @param view
-     */
-    private void resortChildPositionByDeleteView(View view) {
-        if (isSort) {
-            int tagID = Integer.parseInt(view.getTag().toString());
-            int delViewPos = preSortPositionArray.get(tagID);
-            int pos;
-            for (int i = 0; i < preSortPositionArray.size(); i++) {
-                pos = preSortPositionArray.valueAt(i);
-
-                if (pos > delViewPos) {
-                    // 如果view的位置在删除的view的下面，就把位置移动到在它的上一个View的位置（SIZE_REDUCE_VIEW + DEFAULT_MARGING）
-                    pos -= SIZE_REDUCE_VIEW + DEFAULT_MARGING;
-                    preSortPositionArray.put(preSortPositionArray.keyAt(i), pos);
-                }
-            }
-            preSortPositionArray.remove(tagID);
         }
     }
 
@@ -985,7 +991,6 @@ public class SortRichEditor extends ScrollView {
         containerTopVal = position[1] + sortRichEditor.getPaddingTop() + SCROLL_OFFSET;
         containerBottomVal = containerTopVal + sortRichEditor.getHeight() - sortRichEditor.getPaddingBottom() - SCROLL_OFFSET;
 
-        resetScrollSpeed();
     }
 
     /**
@@ -1027,7 +1032,7 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 重新排列Child的位置，更新{@link #preSortPositionArray} 中的position
+     * 重新排列Child的位置，更新{@link #indexArray} 中view的下标顺序
      */
     private void resetChildPostion() {
         indexArray.clear();
@@ -1120,6 +1125,6 @@ public class SortRichEditor extends ScrollView {
         public void onViewDragStateChanged(int state) {
             super.onViewDragStateChanged(state);
         }
-    }
 
+    }
 }
