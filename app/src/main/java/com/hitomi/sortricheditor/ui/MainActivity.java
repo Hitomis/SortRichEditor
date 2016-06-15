@@ -1,4 +1,4 @@
-package com.hitomi.sortricheditor;
+package com.hitomi.sortricheditor.ui;
 
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
@@ -18,8 +18,9 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.hitomi.sortricheditor.R;
+import com.hitomi.sortricheditor.model.SortRichEditorData;
 import com.hitomi.sortricheditor.view.SortRichEditor;
-import com.hitomi.sortricheditor.view.SortRichEditorData;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -28,8 +29,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
-    private static final int REQUEST_CODE_PICK_IMAGE = 1023;
-    private static final int REQUEST_CODE_CAPTURE_CAMEIA = 1022;
+    public static final int REQUEST_CODE_PICK_IMAGE = 1023;
+    public static final int REQUEST_CODE_CAPTURE_CAMEIA = 1022;
+
     private static final File PHOTO_DIR = new File(
             Environment.getExternalStorageDirectory() + "/DCIM/Camera");
 
@@ -41,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private File mCurrentPhotoFile;// 照相机拍照得到的图片
 
-    public static Intent getTakePickIntent(File f) {
+    public Intent getTakePickIntent(File f) {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE, null);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
         return intent;
@@ -127,13 +129,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != RESULT_OK) {
-            return;
-        }
+        if (resultCode != RESULT_OK) return;
 
         if (requestCode == REQUEST_CODE_PICK_IMAGE) {
-            Uri uri = data.getData();
-            insertBitmap(getRealFilePath(uri));
+            String[] photoPaths = data.getStringArrayExtra(PhotoPickerActivity.INTENT_PHOTO_PATHS);
+            editor.addImageArray(photoPaths);
         } else if (requestCode == REQUEST_CODE_CAPTURE_CAMEIA) {
             insertBitmap(mCurrentPhotoFile.getAbsolutePath());
         }
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * @param imagePath
      */
     private void insertBitmap(String imagePath) {
-        editor.insertImage(imagePath);
+        editor.addImage(imagePath);
     }
 
     /**
@@ -182,9 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.iv_gallery:
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");// 相片类型
-                startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
+                startActivityForResult(new Intent(this, PhotoPickerActivity.class), REQUEST_CODE_PICK_IMAGE);
                 break;
             case R.id.iv_camera:
                 openCamera();
@@ -196,4 +194,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+
+
 }
