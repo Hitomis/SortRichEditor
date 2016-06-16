@@ -542,7 +542,7 @@ public class SortRichEditor extends ScrollView {
             }
 
             if (child instanceof RelativeLayout) {
-                child.findViewById(R.id.image_close).setVisibility(View.GONE);
+                ((RelativeLayout) child).getChildAt(1).setVisibility(View.GONE);
                 setFocusOnView(child, false);
             }
 
@@ -613,7 +613,7 @@ public class SortRichEditor extends ScrollView {
             containerLayout.removeAllViews();
             for (View sortChild : sortViewList) {
                 if (sortChild instanceof RelativeLayout) {
-                    sortChild.findViewById(R.id.image_close).setVisibility(View.VISIBLE);
+                    ((RelativeLayout) sortChild).getChildAt(1).setVisibility(View.VISIBLE);
                     setFocusOnView(sortChild, true);
                 }
                 sortChild.setLayoutParams(resetChildLayoutParams(sortChild));
@@ -626,7 +626,7 @@ public class SortRichEditor extends ScrollView {
             for (int i = childCount - 2; i >= 0; i--) {
                 child = containerLayout.getChildAt(i);
                 if (child instanceof RelativeLayout) {
-                    child.findViewById(R.id.image_close).setVisibility(View.VISIBLE);
+                    ((RelativeLayout) child).getChildAt(1).setVisibility(View.VISIBLE);
                     setFocusOnView(child, true);
                 }
                 // 紧邻的两个View都是ImageView
@@ -773,15 +773,33 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 生成图片View
+     * 生成图片Layout
      */
     private RelativeLayout createImageLayout() {
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.layout_imageview, null);
+        RelativeLayout.LayoutParams contentImageLp = new RelativeLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        DataImageView dataImageView = new DataImageView(getContext());
+        dataImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        dataImageView.setLayoutParams(contentImageLp);
+
+        RelativeLayout.LayoutParams closeImageLp = new RelativeLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        closeImageLp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        closeImageLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        closeImageLp.setMargins(0, dip2px(10), dip2px(10), 0);
+        ImageView closeImage = new ImageView(getContext());
+        closeImage.setScaleType(ImageView.ScaleType.FIT_XY);
+        closeImage.setImageResource(R.mipmap.icon_delete);
+        closeImage.setLayoutParams(closeImageLp);
+
+        RelativeLayout layout = new RelativeLayout(getContext());
+        layout.addView(dataImageView);
+        layout.addView(closeImage);
         layout.setTag(viewTagID++);
         setFocusOnView(layout, true);
-        View closeView = layout.findViewById(R.id.image_close);
-        closeView.setTag(layout.getTag());
-        closeView.setOnClickListener(deleteListener);
+
+        closeImage.setTag(layout.getTag());
+        closeImage.setOnClickListener(deleteListener);
 
         // 调整imageView的外边距
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -944,7 +962,8 @@ public class SortRichEditor extends ScrollView {
         }
 
         final RelativeLayout imageLayout = createImageLayout();
-        DataImageView imageView = (DataImageView) imageLayout.findViewById(R.id.edit_imageView);
+
+        DataImageView imageView = (DataImageView) imageLayout.getChildAt(0);
         imageView.setImageBitmap(bmp);
         imageView.setBitmap(bmp);
         imageView.setAbsolutePath(imagePath);
@@ -1025,8 +1044,7 @@ public class SortRichEditor extends ScrollView {
                 EditText item = (EditText) itemView;
                 itemData.setInputStr(item.getText().toString());
             } else if (itemView instanceof RelativeLayout) {
-                DataImageView item = (DataImageView) itemView
-                        .findViewById(R.id.edit_imageView);
+                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
                 itemData.setImagePath(item.getAbsolutePath());
                 itemData.setBitmap(item.getBitmap());
             }
