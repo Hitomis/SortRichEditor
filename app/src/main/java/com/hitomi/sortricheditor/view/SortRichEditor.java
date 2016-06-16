@@ -281,6 +281,7 @@ public class SortRichEditor extends ScrollView {
         etTitle.setFilters(filters);
         etTitle.setBackgroundResource(android.R.color.transparent);
         etTitle.setTextColor(Color.parseColor("#333333"));
+        etTitle.setTextSize(14);
         etTitle.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -758,6 +759,7 @@ public class SortRichEditor extends ScrollView {
         editText.setCursorVisible(true);
         editText.setBackgroundResource(android.R.color.transparent);
         editText.setTextColor(Color.parseColor("#333333"));
+        editText.setTextSize(14);
         editText.setOnKeyListener(editTextKeyListener);
         editText.setOnFocusChangeListener(focusListener);
 

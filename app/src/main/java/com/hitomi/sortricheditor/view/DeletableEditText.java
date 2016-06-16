@@ -13,16 +13,9 @@ import android.widget.EditText;
  */
 public class DeletableEditText extends EditText {
 
-    public DeletableEditText(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
-
-    public DeletableEditText(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
     public DeletableEditText(Context context) {
         super(context);
+        setPadding(0, 0, 0, 0);
     }
 
     @Override
