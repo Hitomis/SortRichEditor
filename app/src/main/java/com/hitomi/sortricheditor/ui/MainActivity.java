@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import com.hitomi.sortricheditor.R;
 import com.hitomi.sortricheditor.model.SortRichEditorData;
-import com.hitomi.sortricheditor.view.SortRichEditor;
+import com.hitomi.sortricheditor.view.editor.SortRichEditor;
 
 import java.io.File;
 import java.text.SimpleDateFormat;

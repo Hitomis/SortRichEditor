@@ -33,7 +33,7 @@
     </RelativeLayout>
 
     <!-- 富文本编辑器 -->
-    <com.hitomi.sortricheditor.view.SortRichEditor
+    <com.hitomi.sortricheditor.view.editor.SortRichEditor
         android:layout_below="@id/relay_title"
         android:id="@+id/richEditor"
         android:layout_width="match_parent"

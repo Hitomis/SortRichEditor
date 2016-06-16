@@ -1,4 +1,4 @@
-package com.hitomi.sortricheditor.view;
+package com.hitomi.sortricheditor.view.editor;
 
 import android.content.Context;
 import android.graphics.Bitmap;
