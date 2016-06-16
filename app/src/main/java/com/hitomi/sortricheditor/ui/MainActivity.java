@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.hitomi.sortricheditor.R;
 import com.hitomi.sortricheditor.model.SortRichEditorData;
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final File PHOTO_DIR = new File(
             Environment.getExternalStorageDirectory() + "/DCIM/Camera");
 
+    private TextView tvSort;
+
     private SortRichEditor editor;
 
     private ImageView ivGallery, ivCamera;
@@ -50,44 +53,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_sort:
-                if (editor.sort()) {
-                    dealInsertImage(false);
-                    item.setTitle("完成");
-                } else {
-                    dealInsertImage(true);
-                    item.setTitle("排序");
-                }
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void dealInsertImage(boolean isEnable) {
-        ivGallery.setClickable(isEnable);
-        ivCamera.setClickable(isEnable);
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
+        tvSort = (TextView) findViewById(R.id.tv_sort);
         editor = (SortRichEditor) findViewById(R.id.richEditor);
         ivGallery = (ImageView) findViewById(R.id.iv_gallery);
         ivCamera = (ImageView) findViewById(R.id.iv_camera);
         btnPosts = (Button) findViewById(R.id.btn_posts);
 
+        tvSort.setOnClickListener(this);
         ivGallery.setOnClickListener(this);
         ivCamera.setOnClickListener(this);
         btnPosts.setOnClickListener(this);
@@ -108,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     protected void openCamera() {
         try {
-            // Launch camera to take photo for selected contact
             PHOTO_DIR.mkdirs();// 创建照片的存储目录
             mCurrentPhotoFile = new File(PHOTO_DIR, getPhotoFileName());// 给新照的照片文件命名
             final Intent intent = getTakePickIntent(mCurrentPhotoFile);
@@ -131,56 +107,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != RESULT_OK) return;
 
+        if (editor.isSort()) tvSort.setText("排序");
         if (requestCode == REQUEST_CODE_PICK_IMAGE) {
             String[] photoPaths = data.getStringArrayExtra(PhotoPickerActivity.INTENT_PHOTO_PATHS);
             editor.addImageArray(photoPaths);
         } else if (requestCode == REQUEST_CODE_CAPTURE_CAMEIA) {
-            insertBitmap(mCurrentPhotoFile.getAbsolutePath());
+            editor.addImage(mCurrentPhotoFile.getAbsolutePath());
         }
-    }
-
-    /**
-     * 添加图片到富文本剪辑器
-     *
-     * @param imagePath
-     */
-    private void insertBitmap(String imagePath) {
-        editor.addImage(imagePath);
-    }
-
-    /**
-     * 根据Uri获取图片文件的绝对路径
-     */
-    public String getRealFilePath(final Uri uri) {
-        if (null == uri) {
-            return null;
-        }
-
-        final String scheme = uri.getScheme();
-        String data = null;
-        if (scheme == null) {
-            data = uri.getPath();
-        } else if (ContentResolver.SCHEME_FILE.equals(scheme)) {
-            data = uri.getPath();
-        } else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
-            Cursor cursor = getContentResolver().query(uri,
-                    new String[]{MediaStore.Images.ImageColumns.DATA}, null, null, null);
-            if (null != cursor) {
-                if (cursor.moveToFirst()) {
-                    int index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                    if (index > -1) {
-                        data = cursor.getString(index);
-                    }
-                }
-                cursor.close();
-            }
-        }
-        return data;
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.tv_sort:
+                if (editor.sort()) {
+                    tvSort.setText("完成");
+                } else {
+                    tvSort.setText("排序");
+                }
+                break;
             case R.id.iv_gallery:
                 startActivityForResult(new Intent(this, PhotoPickerActivity.class), REQUEST_CODE_PICK_IMAGE);
                 break;

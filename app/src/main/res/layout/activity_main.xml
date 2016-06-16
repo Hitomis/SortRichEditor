@@ -2,8 +2,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <RelativeLayout
+        android:id="@+id/relay_title"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="#3F51B5">
+
+        <TextView
+            android:id="@+id/tv_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:drawablePadding="5dp"
+            android:gravity="center_vertical"
+            android:text="SortRichEditor"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/tv_sort"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="排序"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </RelativeLayout>
+
     <!-- 富文本编辑器 -->
     <com.hitomi.sortricheditor.view.SortRichEditor
+        android:layout_below="@id/relay_title"
         android:id="@+id/richEditor"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

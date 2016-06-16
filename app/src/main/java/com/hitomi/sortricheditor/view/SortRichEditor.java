@@ -509,6 +509,10 @@ public class SortRichEditor extends ScrollView {
         return isSort;
     }
 
+    public boolean isSort() {
+        return isSort;
+    }
+
     /**
      * 开始图文排序
      * 图片与文字段落高度缩小为默认高度{@link #SIZE_REDUCE_VIEW}
@@ -622,6 +626,7 @@ public class SortRichEditor extends ScrollView {
             for (int i = childCount - 2; i >= 0; i--) {
                 child = containerLayout.getChildAt(i);
                 if (child instanceof RelativeLayout) {
+                    child.findViewById(R.id.image_close).setVisibility(View.VISIBLE);
                     setFocusOnView(child, true);
                 }
                 // 紧邻的两个View都是ImageView
@@ -801,10 +806,22 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
+     * 插入图片前，如果是在排序状态下，需要先切换到非排序状态
+     */
+    private void prepareAddImage() {
+        if (isSort) { // 如果是排序模式，需要退出排序模式
+            isSort = false;
+            endSortUI();
+            containerLayout.setLayoutTransition(mTransitioner);
+        }
+    }
+
+    /**
      * 根据图片绝对路径集合批量添加一组图片
      * @param imageList
      */
     public void addImageList(List<String> imageList) {
+        prepareAddImage();
         for (String imagePath : imageList) {
             Bitmap bmp = getScaledBitmap(imagePath, getWidth());
             insertImage(bmp, imagePath, true);
@@ -816,6 +833,7 @@ public class SortRichEditor extends ScrollView {
      * @param imagePaths
      */
     public void addImageArray(String[] imagePaths) {
+        prepareAddImage();
         for (String imagePath : imagePaths) {
             Bitmap bmp = getScaledBitmap(imagePath, getWidth());
             insertImage(bmp, imagePath, true);
@@ -828,6 +846,7 @@ public class SortRichEditor extends ScrollView {
      * @param imagePath
      */
     public void addImage(String imagePath) {
+        prepareAddImage();
         Bitmap bmp = getScaledBitmap(imagePath, getWidth());
         insertImage(bmp, imagePath, false);
     }
