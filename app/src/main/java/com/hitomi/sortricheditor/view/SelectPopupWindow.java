@@ -16,7 +16,6 @@ import com.hitomi.sortricheditor.adapter.ViewHolder;
 import com.hitomi.sortricheditor.components.ImageLoader;
 import com.hitomi.sortricheditor.model.PhotoPack;
 
-import java.io.File;
 import java.util.List;
 
 /**

@@ -38,12 +38,12 @@
         android:id="@+id/richEditor"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/title"
+        android:layout_above="@+id/relay_option"
         android:background="#fff" />
 
     <!-- 底部的按钮 -->
     <RelativeLayout
-        android:id="@+id/title"
+        android:id="@+id/relay_option"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
