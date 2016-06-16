@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * 负责处理编辑数据提交等事宜，请自行实现
      */
-    protected void dealEditData(List<SortRichEditorData> editList) {
+    private void dealEditData(List<SortRichEditorData> editList) {
         for (SortRichEditorData itemData : editList) {
             if (itemData.getInputStr() != null) {
                 Log.d("RichEditor", "commit inputStr=" + itemData.getInputStr());
@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    protected void openCamera() {
+    private void openCamera() {
         try {
             PHOTO_DIR.mkdirs();// 创建照片的存储目录
             mCurrentPhotoFile = new File(PHOTO_DIR, getPhotoFileName());// 给新照的照片文件命名
