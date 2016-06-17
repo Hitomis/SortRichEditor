@@ -32,6 +32,7 @@ import com.hitomi.sortricheditor.R;
 import com.hitomi.sortricheditor.model.SortRichEditorData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * 富文本编辑器
  * 1、支持图片文字添加、修改、删除
  * 2、支持图片文字混排
- * 3、支持文字中间随意插入图片
+ * 3、支持文字中间随意插入多张图片
  * 4、支持图片文字任意排序
  */
 public class SortRichEditor extends ScrollView {
@@ -826,9 +827,15 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 插入图片前，如果是在排序状态下，需要先切换到非排序状态
+     * 插入图片前的预处理
      */
     private void prepareAddImage() {
+        View firstView = containerLayout.getChildAt(0);
+        if (containerLayout.getChildCount() == 1 && firstView == lastFocusEdit) {
+            lastFocusEdit = (EditText) firstView;
+            lastFocusEdit.setHint("");
+        }
+
         if (isSort) { // 如果是排序模式，需要退出排序模式
             isSort = false;
             endSortUI();
@@ -837,26 +844,39 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 根据图片绝对路径集合批量添加一组图片
-     * @param imageList
-     */
-    public void addImageList(List<String> imageList) {
-        prepareAddImage();
-        for (String imagePath : imageList) {
-            Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-            insertImage(bmp, imagePath, true);
-        }
-    }
-
-    /**
      * 根据图片绝对路径数组批量添加一组图片
      * @param imagePaths
      */
     public void addImageArray(String[] imagePaths) {
+        addImageList(Arrays.asList(imagePaths));
+    }
+
+    /**
+     * 根据图片绝对路径集合批量添加一组图片
+     * @param imageList
+     */
+    public void addImageList(List<String> imageList) {
+        if (imageList == null || imageList.isEmpty()) return;
         prepareAddImage();
-        for (String imagePath : imagePaths) {
-            Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-            insertImage(bmp, imagePath, true);
+
+        String lastEditStr = lastFocusEdit.getText().toString();
+        int cursorIndex = lastFocusEdit.getSelectionStart();
+        String lastStr = lastEditStr.substring(0, cursorIndex).trim();
+        int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
+
+        if (lastEditStr.length() == 0 || lastStr.length() == 0) {
+            // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片
+            insertBatchImage(imageList);
+        } else {
+            // 如果EditText非空且光标不在最顶端，则添加该组图片后，最后插入一个EditText
+            lastFocusEdit.setText(lastStr);
+            String editStr2 = lastEditStr.substring(cursorIndex).trim();
+            if (containerLayout.getChildCount() - 1 == lastEditIndex || editStr2.length() > 0) {
+                lastFocusEdit = insertEditTextAtIndex(lastEditIndex + 1, editStr2);
+                lastFocusEdit.requestFocus();
+                lastFocusEdit.setSelection(0);
+            }
+            insertBatchImage(imageList);
         }
     }
 
@@ -868,39 +888,46 @@ public class SortRichEditor extends ScrollView {
     public void addImage(String imagePath) {
         prepareAddImage();
         Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-        insertImage(bmp, imagePath, false);
+        insertImage(bmp, imagePath);
+    }
+
+    /**
+     * 批量插入一组图片
+     * @param imagePathList
+     */
+    private void insertBatchImage(List<String> imagePathList) {
+        int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
+        Bitmap bitmap;
+        String imagePath;
+        for (int i = 0; i < imagePathList.size(); i++) {
+            imagePath = imagePathList.get(i);
+            bitmap = getScaledBitmap(imagePath, getWidth());
+            insertImageViewAtIndex(lastEditIndex + i, bitmap, imagePath, true);
+        }
     }
 
     /**
      * 插入一张图片
      */
-    private void insertImage(Bitmap bitmap, String imagePath, boolean isBatch) {
+    private void insertImage(Bitmap bitmap, String imagePath) {
         String lastEditStr = lastFocusEdit.getText().toString();
         int cursorIndex = lastFocusEdit.getSelectionStart();
         String lastStr = lastEditStr.substring(0, cursorIndex).trim();
         int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
 
-        View firstView = containerLayout.getChildAt(0);
-        if (containerLayout.getChildCount() == 1 && firstView == lastFocusEdit) {
-            lastFocusEdit = (EditText) firstView;
-            lastFocusEdit.setHint("");
-        }
-
         if (lastEditStr.length() == 0 || lastStr.length() == 0) {
             // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片，并且EditText下移即可
-            insertImageViewAtIndex(lastEditIndex, bitmap, imagePath, isBatch);
+            insertImageViewAtIndex(lastEditIndex, bitmap, imagePath, false);
         } else {
             // 如果EditText非空且光标不在最顶端，则需要添加新的imageView和EditText
             lastFocusEdit.setText(lastStr);
             String editStr2 = lastEditStr.substring(cursorIndex).trim();
-            if (containerLayout.getChildCount() - 1 == lastEditIndex
-                    || editStr2.length() > 0) {
-                insertEditTextAtIndex(lastEditIndex + 1, editStr2);
+            if (containerLayout.getChildCount() - 1 == lastEditIndex || editStr2.length() > 0) {
+                lastFocusEdit = insertEditTextAtIndex(lastEditIndex + 1, editStr2);
+                lastFocusEdit.requestFocus();
+                lastFocusEdit.setSelection(0);
             }
-
-            insertImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath, isBatch);
-            lastFocusEdit.requestFocus();
-            lastFocusEdit.setSelection(lastStr.length(), lastStr.length());
+            insertImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath, false);
         }
         processSoftKeyBoard(false);
     }
@@ -970,11 +997,12 @@ public class SortRichEditor extends ScrollView {
         imageView.setBitmap(bmp);
         imageView.setAbsolutePath(imagePath);
 
-        // onActivityResult无法触发动画，此处post处理
         final int finalIndex = index;
         if (isBatch) {
+            // 批量插入需要立即执行，否则index错误（舍弃动画效果）
             containerLayout.addView(imageLayout, finalIndex);
         } else {
+            // 单张插入onActivityResult无法触发动画，此处post处理
             containerLayout.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -982,7 +1010,6 @@ public class SortRichEditor extends ScrollView {
                 }
             }, 200);
         }
-
     }
 
     /**
