@@ -899,10 +899,12 @@ public class SortRichEditor extends ScrollView {
         int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
         Bitmap bitmap;
         String imagePath;
+        int index;
         for (int i = 0; i < imagePathList.size(); i++) {
             imagePath = imagePathList.get(i);
             bitmap = getScaledBitmap(imagePath, getWidth());
-            insertImageViewAtIndex(lastEditIndex + i, bitmap, imagePath, true);
+            index = (i == 0 || i== 1) ? lastEditIndex + i : lastEditIndex + (2 * i - 1);
+            insertImageViewAtIndex(index, bitmap, imagePath, true);
         }
     }
 
