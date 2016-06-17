@@ -844,6 +844,17 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
+     * 根据绝对路径添加一张图片
+     *
+     * @param imagePath
+     */
+    public void addImage(String imagePath) {
+        prepareAddImage();
+        Bitmap bmp = getScaledBitmap(imagePath, getWidth());
+        insertImage(bmp, imagePath);
+    }
+
+    /**
      * 根据图片绝对路径数组批量添加一组图片
      * @param imagePaths
      */
@@ -881,34 +892,6 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 根据绝对路径添加一张图片
-     *
-     * @param imagePath
-     */
-    public void addImage(String imagePath) {
-        prepareAddImage();
-        Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-        insertImage(bmp, imagePath);
-    }
-
-    /**
-     * 批量插入一组图片
-     * @param imagePathList
-     */
-    private void insertBatchImage(List<String> imagePathList) {
-        int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
-        Bitmap bitmap;
-        String imagePath;
-        int index;
-        for (int i = 0; i < imagePathList.size(); i++) {
-            imagePath = imagePathList.get(i);
-            bitmap = getScaledBitmap(imagePath, getWidth());
-            index = (i == 0 || i== 1) ? lastEditIndex + i : lastEditIndex + (2 * i - 1);
-            insertImageViewAtIndex(index, bitmap, imagePath, true);
-        }
-    }
-
-    /**
      * 插入一张图片
      */
     private void insertImage(Bitmap bitmap, String imagePath) {
@@ -932,6 +915,20 @@ public class SortRichEditor extends ScrollView {
             insertImageViewAtIndex(lastEditIndex + 1, bitmap, imagePath, false);
         }
         processSoftKeyBoard(false);
+    }
+
+    /**
+     * 批量插入一组图片
+     * @param imagePathList
+     */
+    private void insertBatchImage(List<String> imagePathList) {
+        Bitmap bitmap;
+        String imagePath;
+        for (int i = 0; i < imagePathList.size(); i++) {
+            imagePath = imagePathList.get(i);
+            bitmap = getScaledBitmap(imagePath, getWidth());
+            insertImageViewAtIndex(containerLayout.indexOfChild(lastFocusEdit), bitmap, imagePath, true);
+        }
     }
 
     /**
