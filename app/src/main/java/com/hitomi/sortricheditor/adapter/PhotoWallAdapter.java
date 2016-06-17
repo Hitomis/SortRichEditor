@@ -11,7 +11,6 @@ import com.hitomi.sortricheditor.components.ImageLoader;
 import com.hitomi.sortricheditor.model.PhotoPack;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,8 @@ import java.util.Map;
 public class PhotoWallAdapter extends BaseAdapterHelper <String> {
 
     private ImageLoader imageLoader = ImageLoader.getInstance(3, ImageLoader.Type.LIFO);
+
+    private PhotoPack defaultPhotoPack;
 
     /**
      * 记录该相册中被选中checkbox的照片路径
@@ -36,8 +37,10 @@ public class PhotoWallAdapter extends BaseAdapterHelper <String> {
     public PhotoWallAdapter(Context context, List<String> dataList, int itemLayoutID, PhotoPack defaultPhotoPack) {
         super(context, dataList, itemLayoutID);
 
+        this.defaultPhotoPack = defaultPhotoPack;
+
         selectMap = new LinkedHashMap<>();
-        selectionMap = new HashMap<>();
+        selectionMap = new LinkedHashMap<>();
         selectionMap.put(defaultPhotoPack, selectMap);
     }
 
@@ -72,9 +75,15 @@ public class PhotoWallAdapter extends BaseAdapterHelper <String> {
     }
 
     public void cutoverSelectArray(PhotoPack selectPhotoPack) {
+        if (defaultPhotoPack != selectPhotoPack &&
+                (selectionMap.get(defaultPhotoPack )!= null &&
+                        selectionMap.get(defaultPhotoPack ).isEmpty())) {
+
+            selectionMap.remove(defaultPhotoPack);
+        }
         selectMap = selectionMap.get(selectPhotoPack);
         if (selectMap == null) {
-            selectMap = new HashMap<>();
+            selectMap = new LinkedHashMap<>();
             selectionMap.put(selectPhotoPack, selectMap);
         }
     }
