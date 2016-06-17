@@ -2,7 +2,6 @@ package com.hitomi.sortricheditor.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.SparseArray;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -13,6 +12,7 @@ import com.hitomi.sortricheditor.model.PhotoPack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,19 +26,19 @@ public class PhotoWallAdapter extends BaseAdapterHelper <String> {
     /**
      * 记录该相册中被选中checkbox的照片路径
      */
-    private SparseArray<String> selectionSparse;
+    private Map<Integer, String> selectMap;
 
     /**
      * 记录所有相册中所有被选中checkbox的照片路径
      */
-    private Map<PhotoPack, SparseArray<String>> selectionMap;
+    private Map<PhotoPack, Map<Integer, String>> selectionMap;
 
     public PhotoWallAdapter(Context context, List<String> dataList, int itemLayoutID, PhotoPack defaultPhotoPack) {
         super(context, dataList, itemLayoutID);
 
-        selectionSparse = new SparseArray<>();
+        selectMap = new LinkedHashMap<>();
         selectionMap = new HashMap<>();
-        selectionMap.put(defaultPhotoPack, selectionSparse);
+        selectionMap.put(defaultPhotoPack, selectMap);
     }
 
     @Override
@@ -60,26 +60,26 @@ public class PhotoWallAdapter extends BaseAdapterHelper <String> {
                 ImageView photo = (ImageView) buttonView.getTag(R.id.tag_photo);
 
                 if (isChecked) {
-                    selectionSparse.put(position, item);
+                    selectMap.put(position, item);
                     photo.setColorFilter(Color.parseColor("#66000000"));
                 } else {
-                    selectionSparse.remove(position);
+                    selectMap.remove(position);
                     photo.setColorFilter(null);
                 }
             }
         });
-        checkBox.setChecked(item.equals(selectionSparse.get(position)));
+        checkBox.setChecked(item.equals(selectMap.get(position)));
     }
 
     public void cutoverSelectArray(PhotoPack selectPhotoPack) {
-        selectionSparse = selectionMap.get(selectPhotoPack);
-        if (selectionSparse == null) {
-            selectionSparse = new SparseArray<>();
-            selectionMap.put(selectPhotoPack, selectionSparse);
+        selectMap = selectionMap.get(selectPhotoPack);
+        if (selectMap == null) {
+            selectMap = new HashMap<>();
+            selectionMap.put(selectPhotoPack, selectMap);
         }
     }
 
-    public Map<PhotoPack, SparseArray<String>> getSelectPhotoPathMap() {
+    public Map<PhotoPack, Map<Integer, String>> getSelectPhotoPathMap() {
         return selectionMap;
     }
 
@@ -90,12 +90,12 @@ public class PhotoWallAdapter extends BaseAdapterHelper <String> {
     public String[] getSelectPhotoPathArray() {
         String [] photoPathArray = null;
         List<String> photoPathList = new ArrayList<>();
-        SparseArray<String> valueArray;
+        Map<Integer, String> valueMap;
 
-        for (Map.Entry<PhotoPack, SparseArray<String>> entry : selectionMap.entrySet()) {
-            valueArray = entry.getValue();
-            for (int i = 0; i < valueArray.size(); i++) {
-                photoPathList.add(valueArray.valueAt(i));
+        for (Map.Entry<PhotoPack, Map<Integer, String>> entry : selectionMap.entrySet()) {
+            valueMap = entry.getValue();
+            for (Map.Entry<Integer, String> valueEntry : valueMap.entrySet()) {
+                photoPathList.add(valueEntry.getValue());
             }
         }
 
