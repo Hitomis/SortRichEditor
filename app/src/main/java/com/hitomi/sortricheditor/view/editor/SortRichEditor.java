@@ -478,22 +478,15 @@ public class SortRichEditor extends ScrollView {
             layoutParams.height = DEFAULT_IMAGE_HEIGHT;
         }
         if (child instanceof EditText) { // 文本编辑框
-            requestTriggerFocus(child);
+            child.setFocusable(true);
+            child.setFocusableInTouchMode(true);
+            if (child == lastFocusEdit) {
+                child.requestFocus();
+            }
             child.setBackgroundDrawable(editTextBackground);
             layoutParams.height = editTextHeightArray.get(Integer.parseInt(child.getTag().toString()));
         }
         return layoutParams;
-    }
-
-    /**
-     * 请求获取焦点
-     * @param child
-     */
-    private void requestTriggerFocus(View child) {
-        child.setFocusable(true);
-        child.setFocusableInTouchMode(true);
-        child.requestFocus();
-        lastFocusEdit = (EditText) child;
     }
 
     public boolean sort() {
@@ -735,7 +728,10 @@ public class SortRichEditor extends ScrollView {
                 int index = containerLayout.indexOfChild(ivInsertEditText);
                 containerLayout.removeView(ivInsertEditText);
                 EditText editText = insertEditTextAtIndex(index, "");
-                requestTriggerFocus(editText);
+                editText.setFocusable(true);
+                editText.setFocusableInTouchMode(true);
+                editText.requestFocus();
+                lastFocusEdit = editText;
                 processSoftKeyBoard(true);
             }
         });
