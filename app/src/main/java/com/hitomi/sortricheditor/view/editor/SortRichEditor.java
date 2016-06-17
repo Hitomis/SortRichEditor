@@ -859,6 +859,7 @@ public class SortRichEditor extends ScrollView {
      * @param imagePaths
      */
     public void addImageArray(String[] imagePaths) {
+        if (imagePaths == null) return;
         addImageList(Arrays.asList(imagePaths));
     }
 
