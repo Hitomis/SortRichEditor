@@ -17,12 +17,12 @@
 # Usage
 
 目前没有做很好的封装，如果需要使用SortRichEditor，请copy以下文件到您的工程中
-DataImageView.java
-DeletableEditText.java
-SortRichEditor.java
-shape_dash_edit.xml
-icon_add_text.png (xhdpi)
-icon_delete.png (xhdpi)
+DataImageView.java <br/>
+DeletableEditText.java <br/>
+SortRichEditor.java <br/>
+shape_dash_edit.xml <br/>
+icon_add_text.png (xhdpi) <br/>
+icon_delete.png (xhdpi) <br/>
 
 copy完成后，在布局文件中
     <com.hitomi.sortricheditor.view.editor.SortRichEditor
