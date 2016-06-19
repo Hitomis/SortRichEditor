@@ -49,4 +49,4 @@ N、重构SortRichEditor类 <br/>
 
 #Licence
 
-Hitomi
+MIT
