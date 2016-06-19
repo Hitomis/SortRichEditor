@@ -16,7 +16,7 @@
 
 # Usage
 
-目前没有做很好的封装，如果需要使用SortRichEditor，请copy以下文件到您的工程中
+目前没有做很好的封装，如果需要使用SortRichEditor，请copy以下文件到您的工程中 <br/>
 SortRichEditor.java <br/>
 DataImageView.java <br/>
 DeletableEditText.java <br/>
