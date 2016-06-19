@@ -17,9 +17,9 @@
 # Usage
 
 目前没有做很好的封装，如果需要使用SortRichEditor，请copy以下文件到您的工程中
+SortRichEditor.java <br/>
 DataImageView.java <br/>
 DeletableEditText.java <br/>
-SortRichEditor.java <br/>
 shape_dash_edit.xml <br/>
 icon_add_text.png (xhdpi) <br/>
 icon_delete.png (xhdpi) <br/>
