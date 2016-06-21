@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.widget.ViewDragHelper;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -1077,6 +1078,41 @@ public class SortRichEditor extends ScrollView {
         }
 
         return dataList;
+    }
+
+    /**
+     * 编辑器内容是否为空
+     * @return
+     */
+    public boolean isContentEmpty() {
+        boolean isEmpty = true;
+        int num = containerLayout.getChildCount();
+        for (int index = 0; index < num; index++) {
+            View itemView = containerLayout.getChildAt(index);
+            if (itemView instanceof ImageView) continue;
+            if (itemView instanceof EditText) {
+                EditText item = (EditText) itemView;
+                if (!TextUtils.isEmpty(item.getText().toString().trim())) {
+                    isEmpty = false;
+                    break;
+                }
+            } else if (itemView instanceof RelativeLayout) {
+                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
+                if (!TextUtils.isEmpty(item.getAbsolutePath())) {
+                    isEmpty = false;
+                    break;
+                }
+            }
+        }
+        return isEmpty;
+    }
+
+    /**
+     * 获取标题
+     * @return
+     */
+    public String getTitleData() {
+        return etTitle.getText().toString().trim();
     }
 
     @Override

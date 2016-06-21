@@ -156,6 +156,12 @@ public class PhotoPickerActivity extends AppCompatActivity implements View.OnCli
                         photoWallAdapter.cutoverSelectArray(photoPack);
                         photoWallAdapter.setDataList(photoPathList);
                         photoWallAdapter.notifyDataSetChanged();
+                        gvPhotoWall.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                gvPhotoWall.setSelection(0);
+                            }
+                        }, 200);
                     }
                 });
                 break;
