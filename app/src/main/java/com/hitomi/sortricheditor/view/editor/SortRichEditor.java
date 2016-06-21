@@ -46,17 +46,17 @@ import java.util.concurrent.TimeUnit;
  * 3、支持文字中间随意插入多张图片
  * 4、支持图片文字任意排序
  */
-public class SortRichEditor extends ScrollView {
+public class SortRichEditor extends ScrollView implements EditorDataI{
 
     /**
      * 默认ImageView高度
      */
-    public final int DEFAULT_IMAGE_HEIGHT = dip2px(170);
+    private final int DEFAULT_IMAGE_HEIGHT = dip2px(170);
 
     /**
      * 图文排序的时候，view默认缩小的高度
      */
-    public final int SIZE_REDUCE_VIEW = dip2px(75);
+    private final int SIZE_REDUCE_VIEW = dip2px(75);
 
     /**
      * 出发ScrollView滚动时，顶部与底部的偏移量
@@ -841,55 +841,6 @@ public class SortRichEditor extends ScrollView {
     }
 
     /**
-     * 根据绝对路径添加一张图片
-     *
-     * @param imagePath
-     */
-    public void addImage(String imagePath) {
-        prepareAddImage();
-        Bitmap bmp = getScaledBitmap(imagePath, getWidth());
-        insertImage(bmp, imagePath);
-    }
-
-    /**
-     * 根据图片绝对路径数组批量添加一组图片
-     * @param imagePaths
-     */
-    public void addImageArray(String[] imagePaths) {
-        if (imagePaths == null) return;
-        addImageList(Arrays.asList(imagePaths));
-    }
-
-    /**
-     * 根据图片绝对路径集合批量添加一组图片
-     * @param imageList
-     */
-    public void addImageList(List<String> imageList) {
-        if (imageList == null || imageList.isEmpty()) return;
-        prepareAddImage();
-
-        String lastEditStr = lastFocusEdit.getText().toString();
-        int cursorIndex = lastFocusEdit.getSelectionStart();
-        String lastStr = lastEditStr.substring(0, cursorIndex).trim();
-        int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
-
-        if (lastEditStr.length() == 0 || lastStr.length() == 0) {
-            // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片
-            insertBatchImage(imageList);
-        } else {
-            // 如果EditText非空且光标不在最顶端，则添加该组图片后，最后插入一个EditText
-            lastFocusEdit.setText(lastStr);
-            String editStr2 = lastEditStr.substring(cursorIndex).trim();
-            if (containerLayout.getChildCount() - 1 == lastEditIndex || editStr2.length() > 0) {
-                lastFocusEdit = insertEditTextAtIndex(lastEditIndex + 1, editStr2);
-                lastFocusEdit.requestFocus();
-                lastFocusEdit.setSelection(0);
-            }
-            insertBatchImage(imageList);
-        }
-    }
-
-    /**
      * 插入一张图片
      */
     private void insertImage(Bitmap bitmap, String imagePath) {
@@ -1057,64 +1008,6 @@ public class SortRichEditor extends ScrollView {
 
     }
 
-    /**
-     * 对外提供的接口, 生成编辑数据上传
-     */
-    public List<SortRichEditorData> buildEditData() {
-        List<SortRichEditorData> dataList = new ArrayList<>();
-        int num = containerLayout.getChildCount();
-        for (int index = 0; index < num; index++) {
-            View itemView = containerLayout.getChildAt(index);
-            SortRichEditorData itemData = new SortRichEditorData();
-            if (itemView instanceof EditText) {
-                EditText item = (EditText) itemView;
-                itemData.setInputStr(item.getText().toString());
-            } else if (itemView instanceof RelativeLayout) {
-                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
-                itemData.setImagePath(item.getAbsolutePath());
-                itemData.setBitmap(item.getBitmap());
-            }
-            dataList.add(itemData);
-        }
-
-        return dataList;
-    }
-
-    /**
-     * 编辑器内容是否为空
-     * @return
-     */
-    public boolean isContentEmpty() {
-        boolean isEmpty = true;
-        int num = containerLayout.getChildCount();
-        for (int index = 0; index < num; index++) {
-            View itemView = containerLayout.getChildAt(index);
-            if (itemView instanceof ImageView) continue;
-            if (itemView instanceof EditText) {
-                EditText item = (EditText) itemView;
-                if (!TextUtils.isEmpty(item.getText().toString().trim())) {
-                    isEmpty = false;
-                    break;
-                }
-            } else if (itemView instanceof RelativeLayout) {
-                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
-                if (!TextUtils.isEmpty(item.getAbsolutePath())) {
-                    isEmpty = false;
-                    break;
-                }
-            }
-        }
-        return isEmpty;
-    }
-
-    /**
-     * 获取标题
-     * @return
-     */
-    public String getTitleData() {
-        return etTitle.getText().toString().trim();
-    }
-
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
@@ -1143,6 +1036,121 @@ public class SortRichEditor extends ScrollView {
             sortIndex = (preSortPositionArray.get(tagID) - DEFAULT_MARGING) / (SIZE_REDUCE_VIEW + DEFAULT_MARGING);
             indexArray.put(i, sortIndex);
         }
+    }
+
+    /**
+     * 根据绝对路径添加一张图片
+     *
+     * @param imagePath
+     */
+    @Override
+    public void addImage(String imagePath) {
+        prepareAddImage();
+        Bitmap bmp = getScaledBitmap(imagePath, getWidth());
+        insertImage(bmp, imagePath);
+    }
+
+    /**
+     * 根据图片绝对路径数组批量添加一组图片
+     * @param imagePaths
+     */
+    @Override
+    public void addImageArray(String[] imagePaths) {
+        if (imagePaths == null) return;
+        addImageList(Arrays.asList(imagePaths));
+    }
+
+    /**
+     * 根据图片绝对路径集合批量添加一组图片
+     * @param imageList
+     */
+    @Override
+    public void addImageList(List<String> imageList) {
+        if (imageList == null || imageList.isEmpty()) return;
+        prepareAddImage();
+
+        String lastEditStr = lastFocusEdit.getText().toString();
+        int cursorIndex = lastFocusEdit.getSelectionStart();
+        String lastStr = lastEditStr.substring(0, cursorIndex).trim();
+        int lastEditIndex = containerLayout.indexOfChild(lastFocusEdit);
+
+        if (lastEditStr.length() == 0 || lastStr.length() == 0) {
+            // 如果EditText为空，或者光标已经顶在了editText的最前面，则直接插入图片
+            insertBatchImage(imageList);
+        } else {
+            // 如果EditText非空且光标不在最顶端，则添加该组图片后，最后插入一个EditText
+            lastFocusEdit.setText(lastStr);
+            String editStr2 = lastEditStr.substring(cursorIndex).trim();
+            if (containerLayout.getChildCount() - 1 == lastEditIndex || editStr2.length() > 0) {
+                lastFocusEdit = insertEditTextAtIndex(lastEditIndex + 1, editStr2);
+                lastFocusEdit.requestFocus();
+                lastFocusEdit.setSelection(0);
+            }
+            insertBatchImage(imageList);
+        }
+    }
+
+
+    /**
+     * 对外提供的接口, 生成编辑数据上传
+     */
+    @Override
+    public List<SortRichEditorData> buildEditData() {
+        List<SortRichEditorData> dataList = new ArrayList<>();
+        int num = containerLayout.getChildCount();
+        for (int index = 0; index < num; index++) {
+            View itemView = containerLayout.getChildAt(index);
+            SortRichEditorData itemData = new SortRichEditorData();
+            if (itemView instanceof EditText) {
+                EditText item = (EditText) itemView;
+                itemData.setInputStr(item.getText().toString());
+            } else if (itemView instanceof RelativeLayout) {
+                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
+                itemData.setImagePath(item.getAbsolutePath());
+                itemData.setBitmap(item.getBitmap());
+            }
+            dataList.add(itemData);
+        }
+
+        return dataList;
+    }
+
+
+    /**
+     * 编辑器内容是否为空
+     * @return
+     */
+    @Override
+    public boolean isContentEmpty() {
+        boolean isEmpty = true;
+        int num = containerLayout.getChildCount();
+        for (int index = 0; index < num; index++) {
+            View itemView = containerLayout.getChildAt(index);
+            if (itemView instanceof ImageView) continue;
+            if (itemView instanceof EditText) {
+                EditText item = (EditText) itemView;
+                if (!TextUtils.isEmpty(item.getText().toString().trim())) {
+                    isEmpty = false;
+                    break;
+                }
+            } else if (itemView instanceof RelativeLayout) {
+                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
+                if (!TextUtils.isEmpty(item.getAbsolutePath())) {
+                    isEmpty = false;
+                    break;
+                }
+            }
+        }
+        return isEmpty;
+    }
+
+    /**
+     * 获取标题
+     * @return
+     */
+    @Override
+    public String getTitleData() {
+        return etTitle.getText().toString().trim();
     }
 
     private class ViewDragHelperCallBack extends ViewDragHelper.Callback {
