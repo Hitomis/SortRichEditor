@@ -206,6 +206,8 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
 
     private float currRawY;
 
+    private float preY;
+
     public SortRichEditor(Context context) {
         this(context, null);
     }
@@ -1011,7 +1013,6 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
-//        processSoftKeyBoard(false);
     }
 
     @Override
@@ -1020,6 +1021,21 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
         if (viewDragHelper.continueSettling(true)) {
             invalidate();
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                preY = ev.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (Math.abs(ev.getY() - preY) >= viewDragHelper.getTouchSlop()) {
+                    processSoftKeyBoard(false);
+                }
+                break;
+        }
+        return super.onTouchEvent(ev);
     }
 
     /**
