@@ -38,13 +38,12 @@ SortRichEditor不包含照片墙、选择照片插入照片、拍照插入等功
 
 # TODO
 
-1、图片压缩问题防止OOM <br/>
-2、优化插入图片的速度 <br/>
-3、点击图片预览功能 <br/>
-4、<input type="checkbox" checked="checked">优化软键盘的显示和隐藏 <br/>
-5、封装底部操作菜单到SortRichEditor中<br/>
-M、排序操作方式改写为长按图片即可排序 <br/>
-N、重构SortRichEditor类 <br/>
+- [ ] 图片压缩问题防止OOM <br/>
+- [ ] 优化插入图片的速度 <br/>
+- [ ] 点击图片预览功能 <br/>
+- [x] 优化软键盘的显示和隐藏 <br/>
+- [ ] 排序操作方式改写为长按图片即可排序 <br/>
+- [ ] 重构SortRichEditor类 <br/>
 
 
 #Licence
