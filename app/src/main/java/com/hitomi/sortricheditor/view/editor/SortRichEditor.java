@@ -3,8 +3,8 @@ package com.hitomi.sortricheditor.view.editor;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.ViewDragHelper;
@@ -46,7 +46,17 @@ import java.util.concurrent.TimeUnit;
  * 3、支持文字中间随意插入多张图片
  * 4、支持图片文字任意排序
  */
-public class SortRichEditor extends ScrollView implements EditorDataI{
+public class SortRichEditor extends ScrollView implements SEditorDataI {
+
+    /**
+     * 标题字数限制
+     */
+    private static final int TITLE_WORD_LIMIT_COUNT = 30;
+
+    /**
+     * 编辑器中可以插入的最多图片数量
+     */
+    private static final int MAX_IMAGE_COUNT = 30;
 
     /**
      * 默认ImageView高度
@@ -72,11 +82,6 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
      * 拖动排序的时候，当在ScrollView边界拖动时默认自滚动速度
      */
     private final int DEFAULT_SCROLL_SPEED = dip2px(15);
-
-    /**
-     * 标题字数限制
-     */
-    private static final int TITLE_WORD_LIMIT_COUNT = 30;
 
     /**
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
@@ -151,7 +156,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
     /**
      * 标题栏EditText
      */
-    private DeletableEditText etTitle;
+    private SEDeletableEditText etTitle;
 
     /**
      * 添加或者删除图片View时的Transition动画
@@ -277,7 +282,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
         tvTextLimit.setLayoutParams(textLimitLayoutParams);
 
         // 标题栏的ViewGroup中添加一个EditText，用来填写标题文本
-        etTitle = new DeletableEditText(getContext());
+        etTitle = new SEDeletableEditText(getContext());
         etTitle.setHint("请输入帖子标题");
         etTitle.setGravity(Gravity.TOP);
         etTitle.setCursorVisible(true);
@@ -752,7 +757,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
      * 生成文本输入框
      */
     private EditText createEditText(String hint) {
-        EditText editText = new DeletableEditText(getContext());
+        EditText editText = new SEDeletableEditText(getContext());
         editText.setTag(viewTagID++);
         editText.setHint(hint);
         editText.setGravity(Gravity.TOP);
@@ -780,7 +785,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
     private RelativeLayout createImageLayout() {
         RelativeLayout.LayoutParams contentImageLp = new RelativeLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        DataImageView dataImageView = new DataImageView(getContext());
+        SEDataImageView dataImageView = new SEDataImageView(getContext());
         dataImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         dataImageView.setLayoutParams(contentImageLp);
 
@@ -877,7 +882,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
         String imagePath;
         for (int i = 0; i < imagePathList.size(); i++) {
             imagePath = imagePathList.get(i);
-            bitmap = getScaledBitmap(imagePath, getWidth());
+            bitmap = getScaledBitmap(imagePath);
             insertImageViewAtIndex(containerLayout.indexOfChild(lastFocusEdit), bitmap, imagePath, true);
         }
     }
@@ -942,7 +947,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
 
         final RelativeLayout imageLayout = createImageLayout();
 
-        DataImageView imageView = (DataImageView) imageLayout.getChildAt(0);
+        SEDataImageView imageView = (SEDataImageView) imageLayout.getChildAt(0);
         imageView.setImageBitmap(bmp);
         imageView.setBitmap(bmp);
         imageView.setAbsolutePath(imagePath);
@@ -963,19 +968,13 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
     }
 
     /**
-     * 根据view的宽度，动态缩放bitmap尺寸
-     *
-     * @param width view的宽度
+     * 根据view的宽度，动态缩放bitmap尺寸, 并自动旋转为正方向
      */
-    private Bitmap getScaledBitmap(String filePath, int width) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(filePath, options);
-        int sampleSize = options.outWidth > width ? options.outWidth / width
-                + 1 : 1;
-        options.inJustDecodeBounds = false;
-        options.inSampleSize = sampleSize;
-        return BitmapFactory.decodeFile(filePath, options);
+    private Bitmap getScaledBitmap(String filePath) {
+        PointF pointF = new PointF();
+        pointF.x = getWidth() - 2 * DEFAULT_MARGING;
+        pointF.y = DEFAULT_IMAGE_HEIGHT;
+        return SEImageHelper.getInstance().compressBitmap(filePath, pointF);
     }
 
     /**
@@ -1062,7 +1061,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
     @Override
     public void addImage(String imagePath) {
         prepareAddImage();
-        Bitmap bmp = getScaledBitmap(imagePath, getWidth());
+        Bitmap bmp = getScaledBitmap(imagePath);
         insertImage(bmp, imagePath);
     }
 
@@ -1121,7 +1120,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
                 EditText item = (EditText) itemView;
                 itemData.setInputStr(item.getText().toString());
             } else if (itemView instanceof RelativeLayout) {
-                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
+                SEDataImageView item = (SEDataImageView) ((RelativeLayout) itemView).getChildAt(0);
                 itemData.setImagePath(item.getAbsolutePath());
                 itemData.setBitmap(item.getBitmap());
             }
@@ -1129,6 +1128,22 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
         }
 
         return dataList;
+    }
+
+    /**
+     * 获取当前编辑器中图片数量
+     * @return
+     */
+    @Override
+    public int getImageCount() {
+        int imageCount = 0;
+        int num = containerLayout.getChildCount();
+        for (int index = 0; index < num; index++) {
+            View child = containerLayout.getChildAt(index);
+            if (child instanceof RelativeLayout)
+                imageCount++;
+        }
+        return imageCount;
     }
 
 
@@ -1150,7 +1165,7 @@ public class SortRichEditor extends ScrollView implements EditorDataI{
                     break;
                 }
             } else if (itemView instanceof RelativeLayout) {
-                DataImageView item = (DataImageView) ((RelativeLayout) itemView).getChildAt(0);
+                SEDataImageView item = (SEDataImageView) ((RelativeLayout) itemView).getChildAt(0);
                 if (!TextUtils.isEmpty(item.getAbsolutePath())) {
                     isEmpty = false;
                     break;

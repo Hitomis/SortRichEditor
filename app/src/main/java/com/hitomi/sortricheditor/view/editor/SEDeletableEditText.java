@@ -11,9 +11,9 @@ import android.widget.EditText;
 /**
  * 处理软键盘回删按钮backSpace时回调OnKeyListener
  */
-public class DeletableEditText extends EditText {
+public class SEDeletableEditText extends EditText {
 
-    public DeletableEditText(Context context) {
+    public SEDeletableEditText(Context context) {
         super(context);
         setPadding(0, 0, 0, 0);
     }

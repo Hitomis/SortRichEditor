@@ -8,21 +8,21 @@ import android.widget.ImageView;
 /**
  * 可以存放Bitmap和Path的ImageView
  */
-public class DataImageView extends ImageView {
+public class SEDataImageView extends ImageView {
 
 	private String absolutePath;
 
 	private Bitmap bitmap;
 
-	public DataImageView(Context context) {
+	public SEDataImageView(Context context) {
 		this(context, null);
 	}
 
-	public DataImageView(Context context, AttributeSet attrs) {
+	public SEDataImageView(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public DataImageView(Context context, AttributeSet attrs, int defStyle) {
+	public SEDataImageView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 	}
 

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by hitomi on 2016/6/21.
  */
-public interface EditorDataI {
+public interface SEditorDataI {
 
     /**
      * 根据绝对路径添加一张图片
@@ -41,6 +41,12 @@ public interface EditorDataI {
      * 生成编辑数据
      */
     public List<SortRichEditorData> buildEditData();
+
+    /**
+     * 获取当前编辑器中图片数量
+     * @return
+     */
+    public int getImageCount();
 
     /**
      * 编辑器内容是否为空
