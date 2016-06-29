@@ -39,9 +39,13 @@ SortRichEditor不包含照片墙、选择照片插入照片、拍照插入等功
 # TODO
 
 - [x] 图片压缩问题防止OOM
-- [ ] 优化插入图片的速度
-- [ ] 点击图片预览功能
+- [x] 优化插入图片的速度
 - [x] 优化软键盘的显示和隐藏
-- [ ] 排序操作方式改写为长按图片即可排序
 - [ ] 重构SortRichEditor类
+
+# Thanks
+- [@xmuSistone][1]
+- [@张鸿洋][2]
+[1]: https://github.com/hongyangAndroid
+[2]: https://github.com/xmuSistone/android-animate-RichEditor
 
