@@ -46,6 +46,9 @@ SortRichEditor不包含照片墙、选择照片插入照片、拍照插入等功
 # Thanks
 - [@xmuSistone][1]
 - [@张鸿洋][2]
-[1]: https://github.com/hongyangAndroid
-[2]: https://github.com/xmuSistone/android-animate-RichEditor
+
+
+[1]: https://github.com/xmuSistone/android-animate-RichEditor
+[2]: https://github.com/hongyangAndroid
+
 
