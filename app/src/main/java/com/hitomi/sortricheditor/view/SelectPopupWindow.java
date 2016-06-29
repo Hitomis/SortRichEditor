@@ -13,8 +13,8 @@ import android.widget.PopupWindow;
 import com.hitomi.sortricheditor.R;
 import com.hitomi.sortricheditor.adapter.BaseAdapterHelper;
 import com.hitomi.sortricheditor.adapter.ViewHolder;
-import com.hitomi.sortricheditor.components.ImageLoader;
 import com.hitomi.sortricheditor.model.PhotoPack;
+import com.hitomi.sortricheditor.view.editor.SEImageLoader;
 
 import java.util.List;
 
@@ -66,7 +66,7 @@ public class SelectPopupWindow extends PopupWindow {
     private void initView() {
         BaseAdapterHelper<PhotoPack> baseAdapterHelper = new BaseAdapterHelper<PhotoPack>(activity, dataList, R.layout.item_photopack_picker) {
 
-            private ImageLoader imageLoader = ImageLoader.getInstance(3, ImageLoader.Type.LIFO);
+            private SEImageLoader imageLoader = SEImageLoader.getInstance(3, SEImageLoader.Type.LIFO);
 
             @Override
             public void convert(ViewHolder viewHolder, PhotoPack item, int position) {
