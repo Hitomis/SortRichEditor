@@ -16,15 +16,14 @@
 
 # Usage
 
-目前没有做很好的封装，如果需要使用SortRichEditor，请copy以下文件到您的工程中 <br/>
-- SortRichEditor.java
-- DataImageView.java
-- DeletableEditText.java
+目前没有做很好的封装，如果需要使用SortRichEditor，请复制 editor 包中全部文件到您的项目当中 <br/>
+以及以下的资源文件 <br/>
 - shape_dash_edit.xml
 - icon_add_text.png (xhdpi)
 - icon_delete.png (xhdpi)
+- icon_empty_photo (xhdpi)
 
-copy完成后，在布局文件中
+copy完成后，在布局文件中使用
 ```
     <com.hitomi.sortricheditor.view.editor.SortRichEditor
         android:id="@+id/richEditor"
@@ -46,6 +45,7 @@ SortRichEditor不包含照片墙、选择照片插入照片、拍照插入等功
 # Thanks
 - [@xmuSistone][1]
 - [@张鸿洋][2]
-[1]: https://github.com/hongyangAndroid
-[2]: https://github.com/xmuSistone/android-animate-RichEditor
 
+
+[1]: https://github.com/xmuSistone/android-animate-RichEditor
+[2]: https://github.com/hongyangAndroid
