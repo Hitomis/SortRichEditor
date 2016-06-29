@@ -1,7 +1,8 @@
-package com.hitomi.sortricheditor.components;
+package com.hitomi.sortricheditor.view.editor;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -17,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
-public class ImageLoader {
+public class SEImageLoader {
 	/**
 	 * 图片缓存的核心类
 	 */
@@ -59,7 +60,7 @@ public class ImageLoader {
 	 */
 	private volatile Semaphore mPoolSemaphore;
 
-	private static ImageLoader mInstance;
+	private static SEImageLoader mInstance;
 
 	/**
 	 * 队列的调度方式
@@ -73,19 +74,19 @@ public class ImageLoader {
 	 * 
 	 * @return
 	 */
-	public static ImageLoader getInstance() {
+	public static SEImageLoader getInstance() {
 
 		if (mInstance == null) {
-			synchronized (ImageLoader.class) {
+			synchronized (SEImageLoader.class) {
 				if (mInstance == null) {
-					mInstance = new ImageLoader(1, Type.LIFO);
+					mInstance = new SEImageLoader(1, Type.LIFO);
 				}
 			}
 		}
 		return mInstance;
 	}
 
-	private ImageLoader(int threadCount, Type type) {
+	private SEImageLoader(int threadCount, Type type) {
 		init(threadCount, type);
 	}
 
@@ -139,6 +140,76 @@ public class ImageLoader {
 	public void loadImage(final String path, final ImageView imageView) {
 		// set tag
 		imageView.setTag(path);
+		createMainHandler();
+
+		Bitmap bm = getBitmapFromLruCache(path);
+		if (bm != null) {
+			sendImageLoadCompleteMessage(path, imageView, bm);
+		} else {
+			addTask(new Runnable() {
+				@Override
+				public void run() {
+
+					ImageSize imageSize = getImageViewWidth(imageView);
+
+					int reqWidth = imageSize.width;
+					int reqHeight = imageSize.height;
+
+					Bitmap bm = decodeSampledBitmapFromResource(path, reqWidth, reqHeight);
+					addBitmapToLruCache(path, bm);
+					sendImageLoadCompleteMessage(path, imageView, getBitmapFromLruCache(path));
+					mPoolSemaphore.release();
+				}
+			});
+		}
+	}
+
+	/**
+	 * 根据指定的尺寸去加载图片
+	 *
+	 * @param path
+	 * @param imageView
+	 * @param maxSize
+	 */
+	public void loadImage(final String path, final ImageView imageView, final PointF maxSize) {
+		// set tag
+		imageView.setTag(path);
+		// UI线程
+		createMainHandler();
+
+		Bitmap bm = getBitmapFromLruCache(path);
+		if (bm != null) {
+			sendImageLoadCompleteMessage(path, imageView, bm);
+		} else {
+			addTask(new Runnable() {
+				@Override
+				public void run() {
+					Bitmap bm = compressBitmap(path, maxSize);
+					addBitmapToLruCache(path, bm);
+					sendImageLoadCompleteMessage(path, imageView, getBitmapFromLruCache(path));
+					mPoolSemaphore.release();
+				}
+			});
+		}
+	}
+
+	/**
+	 * 发送图片已经加载完成的消息到主线程
+	 * @param path
+	 * @param imageView
+	 * @param bm
+	 */
+	private void sendImageLoadCompleteMessage(String path, ImageView imageView, Bitmap bm) {
+		ImgBeanHolder holder = new ImgBeanHolder();
+		holder.bitmap = bm;
+		holder.imageView = imageView;
+		holder.path = path;
+		Message message = Message.obtain();
+		message.obj = holder;
+		mHandler.sendMessage(message);
+	}
+
+	private void createMainHandler() {
 		// UI线程
 		if (mHandler == null) {
 			mHandler = new Handler() {
@@ -154,41 +225,35 @@ public class ImageLoader {
 				}
 			};
 		}
+	}
 
-		Bitmap bm = getBitmapFromLruCache(path);
-		if (bm != null) {
-			ImgBeanHolder holder = new ImgBeanHolder();
-			holder.bitmap = bm;
-			holder.imageView = imageView;
-			holder.path = path;
-			Message message = Message.obtain();
-			message.obj = holder;
-			mHandler.sendMessage(message);
-		} else {
-			addTask(new Runnable() {
-				@Override
-				public void run() {
+	public Bitmap compressBitmap(String path, PointF maxSize) {
+		Bitmap compressBitmap = null;
+		// 限定-尺寸
+		float wMax = maxSize.x;
+		float hMax = maxSize.y;
+		BitmapFactory.Options opt = new BitmapFactory.Options();
+		opt.inJustDecodeBounds = true;
+		BitmapFactory.decodeFile(path, opt);
+		if (!opt.mCancel && opt.outWidth != -1 && opt.outHeight != -1) {
+			float wIn = opt.outWidth < opt.outHeight ? opt.outWidth : opt.outHeight;
+			float hIn = opt.outHeight > opt.outWidth ? opt.outHeight : opt.outWidth;
 
-					ImageSize imageSize = getImageViewWidth(imageView);
+			float scaleIn = wIn / hIn;
+			float scaleMax = wMax / hMax;
 
-					int reqWidth = imageSize.width;
-					int reqHeight = imageSize.height;
+			// 若较宽 则限制宽
+			opt.inJustDecodeBounds = false;
+			// "1/opt.inSampleSize"表缩放比率
+			if (scaleIn > scaleMax) {
+				opt.inSampleSize = (int) Math.ceil(wIn / wMax);
+			} else {
+				opt.inSampleSize = (int) Math.ceil(hIn / hMax);
+			}
 
-					Bitmap bm = decodeSampledBitmapFromResource(path, reqWidth, reqHeight);
-					addBitmapToLruCache(path, bm);
-					ImgBeanHolder holder = new ImgBeanHolder();
-					holder.bitmap = getBitmapFromLruCache(path);
-					holder.imageView = imageView;
-					holder.path = path;
-					Message message = Message.obtain();
-					message.obj = holder;
-					// Log.e("TAG", "mHandler.sendMessage(message);");
-					mHandler.sendMessage(message);
-					mPoolSemaphore.release();
-				}
-			});
+			compressBitmap = BitmapFactory.decodeFile(path, opt);
 		}
-
+		return compressBitmap;
 	}
 
 	/**
@@ -228,12 +293,12 @@ public class ImageLoader {
 	 * @param type 队列调度方式
 	 * @return
 	 */
-	public static ImageLoader getInstance(int threadCount, Type type) {
+	public static SEImageLoader getInstance(int threadCount, Type type) {
 
 		if (mInstance == null) {
-			synchronized (ImageLoader.class) {
+			synchronized (SEImageLoader.class) {
 				if (mInstance == null) {
-					mInstance = new ImageLoader(threadCount, type);
+					mInstance = new SEImageLoader(threadCount, type);
 				}
 			}
 		}
