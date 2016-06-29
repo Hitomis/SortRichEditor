@@ -7,7 +7,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 
 import com.hitomi.sortricheditor.R;
-import com.hitomi.sortricheditor.components.ImageLoader;
+import com.hitomi.sortricheditor.view.editor.SEImageLoader;
 import com.hitomi.sortricheditor.model.PhotoPack;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class PhotoWallAdapter extends BaseAdapterHelper <String> {
 
-    private ImageLoader imageLoader = ImageLoader.getInstance(3, ImageLoader.Type.LIFO);
+    private SEImageLoader imageLoader = SEImageLoader.getInstance(3, SEImageLoader.Type.LIFO);
 
     private PhotoPack defaultPhotoPack;
 
