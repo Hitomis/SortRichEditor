@@ -1,7 +1,5 @@
 package com.hitomi.sortricheditor.view.editor;
 
-import com.hitomi.sortricheditor.model.SortRichEditorData;
-
 import java.util.List;
 
 /**
@@ -40,7 +38,7 @@ public interface SEditorDataI {
     /**
      * 生成编辑数据
      */
-    public List<SortRichEditorData> buildEditData();
+    public List<SEditorData> buildEditData();
 
     /**
      * 获取当前编辑器中图片数量

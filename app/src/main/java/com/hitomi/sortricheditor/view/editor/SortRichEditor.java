@@ -30,7 +30,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.hitomi.sortricheditor.R;
-import com.hitomi.sortricheditor.model.SortRichEditorData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1107,12 +1106,12 @@ public class SortRichEditor extends ScrollView implements SEditorDataI {
      * 对外提供的接口, 生成编辑数据上传
      */
     @Override
-    public List<SortRichEditorData> buildEditData() {
-        List<SortRichEditorData> dataList = new ArrayList<>();
+    public List<SEditorData> buildEditData() {
+        List<SEditorData> dataList = new ArrayList<>();
         int num = containerLayout.getChildCount();
         for (int index = 0; index < num; index++) {
             View itemView = containerLayout.getChildAt(index);
-            SortRichEditorData itemData = new SortRichEditorData();
+            SEditorData itemData = new SEditorData();
             if (itemView instanceof EditText) {
                 EditText item = (EditText) itemView;
                 itemData.setInputStr(item.getText().toString());

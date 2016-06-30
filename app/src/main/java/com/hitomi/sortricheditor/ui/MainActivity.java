@@ -15,7 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.hitomi.sortricheditor.R;
-import com.hitomi.sortricheditor.model.SortRichEditorData;
+import com.hitomi.sortricheditor.view.editor.SEditorData;
 import com.hitomi.sortricheditor.view.editor.SortRichEditor;
 
 import java.io.File;
@@ -68,8 +68,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * 负责处理编辑数据提交等事宜，请自行实现
      */
-    private void dealEditData(List<SortRichEditorData> editList) {
-        for (SortRichEditorData itemData : editList) {
+    private void dealEditData(List<SEditorData> editList) {
+        for (SEditorData itemData : editList) {
             if (itemData.getInputStr() != null) {
                 Log.d("RichEditor", "commit inputStr=" + itemData.getInputStr());
             } else if (itemData.getImagePath() != null) {
@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 openCamera();
                 break;
             case R.id.btn_posts:
-                List<SortRichEditorData> editList = editor.buildEditData();
+                List<SEditorData> editList = editor.buildEditData();
                 // 下面的代码可以上传、或者保存，请自行实现
                 dealEditData(editList);
                 break;
