@@ -11,6 +11,8 @@
 
 # Preview
 
+由于 gif 图片较大，网速不好的童鞋请耐心等待... 如果发现图片里面卡，那是还在缓冲。真实项目是很流畅的
+
 <img src="preview/SortRichEditor.gif"/>
 
 
