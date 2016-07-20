@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.ViewDragHelper;
 import android.text.Editable;
@@ -81,6 +82,11 @@ public class SortRichEditor extends ScrollView implements SEditorDataI {
      * 拖动排序的时候，当在ScrollView边界拖动时默认自滚动速度
      */
     private final int DEFAULT_SCROLL_SPEED = dip2px(15);
+
+    /**
+     * 虚线背景
+     */
+    private final GradientDrawable dashDrawable;
 
     /**
      * 因为排序状态下会修改EditText的Background，所以这里保存默认EditText
@@ -239,6 +245,11 @@ public class SortRichEditor extends ScrollView implements SEditorDataI {
         initLineView();
 
         initContainerLayout();
+
+        // 初始化虚线背景 Drawable
+        dashDrawable = new GradientDrawable();
+        dashDrawable.setStroke(dip2px(1), Color.parseColor("#4CA4E9"), dip2px(4), dip2px(3));
+        dashDrawable.setColor(Color.parseColor("#ffffff"));
 
         // 初始化图片加载器
         imageLoader = SEImageLoader.getInstance(3, SEImageLoader.Type.LIFO);
@@ -562,7 +573,7 @@ public class SortRichEditor extends ScrollView implements SEditorDataI {
                 EditText editText = ((EditText) child);
                 editTextHeightArray.put(tagID, layoutParams.height);
                 editText.setFocusable(false);
-                editText.setBackgroundResource(R.drawable.shape_dash_edit);
+                editText.setBackgroundDrawable(dashDrawable);
             }
 
             layoutParams.height = SIZE_REDUCE_VIEW;
