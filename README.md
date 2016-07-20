@@ -19,11 +19,10 @@
 # Usage
 
 目前没有做很好的封装，如果需要使用SortRichEditor，请复制 editor 包中全部文件到您的项目当中 <br/>
-以及以下的资源文件 <br/>
-- shape_dash_edit.xml
+以及以下三张图标资源文件 <br/>
 - icon_add_text.png (xhdpi)
 - icon_delete.png (xhdpi)
-- icon_empty_photo (xhdpi)
+- icon_empty_photo.png (xhdpi)
 
 copy完成后，在布局文件中使用
 ```
